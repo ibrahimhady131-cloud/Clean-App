@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { SectionHeader } from "@/components/SectionHeader";
 
 const SERVICES_GRID = [
   {
@@ -12,32 +12,32 @@ const SERVICES_GRID = [
     title: "تنظيف المنزل",
     desc: "تنظيف شامل لجميع أرجاء المنزل",
     image: require("@/assets/images/illustration-sofa.png"),
-    color: "#FEF3C7", // pale yellow arc
-    btnColor: "#10B981", // green btn
+    color: "#EFF6FF",
+    btnColor: "#3B82F6",
   },
   {
     id: "office",
     title: "تنظيف المكاتب",
     desc: "بيئة عمل نظيفة ومنظمة لإنتاجية أعلى",
     image: require("@/assets/images/illustration-office.png"),
-    color: "#D1FAE5", // pale green arc
-    btnColor: "#3B82F6", // blue btn
+    color: "#ECFDF5",
+    btnColor: "#10B981",
   },
   {
     id: "deep",
     title: "تنظيف عميق",
     desc: "تنظيف عميق لإزالة الأوساخ المتراكمة",
     image: require("@/assets/images/illustration-vacuum.png"),
-    color: "#DBEAFE", // pale blue arc
-    btnColor: "#3B82F6", // blue btn
+    color: "#EFF6FF",
+    btnColor: "#3B82F6",
   },
   {
     id: "sofa",
     title: "تنظيف الكنب",
     desc: "إزالة البقع و الروائح لكنب نظيف ومعطر",
     image: require("@/assets/images/illustration-armchair.png"),
-    color: "#FFEDD5", // pale peach arc
-    btnColor: "#F59E0B", // orange btn
+    color: "#FFF7ED",
+    btnColor: "#F59E0B",
   },
 ];
 
@@ -46,43 +46,51 @@ export default function ServicesScreen() {
   const colors = useColors();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
-          <Feather name="chevron-right" size={24} color={colors.foreground} />
+    <View style={[styles.container, { backgroundColor: "#F8FAFC" }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity style={styles.iconCircle} onPress={() => router.back()}>
+          <Feather name="chevron-right" size={18} color={colors.foreground} />
         </TouchableOpacity>
-        <View style={styles.headerTextContainer}>
+        <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>اختر الخدمة</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>اختر الخدمة التي تناسب احتياجك</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>
+            اختر الخدمة التي تناسب احتياجك
+          </Text>
         </View>
-        <TouchableOpacity style={styles.iconButton}>
-          <Feather name="help-circle" size={24} color={colors.foreground} />
+        <TouchableOpacity style={[styles.iconCircle, { backgroundColor: "#EFF6FF" }]}>
+          <Feather name="headphones" size={16} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.introCard, { backgroundColor: colors.primaryLight }]}>
-          <Image 
-            source={require("@/assets/images/illustration-bucket.png")} 
-            style={styles.introImage} 
+      <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
+        <LinearGradient
+          colors={["#DBEAFE", "#EFF6FF"]}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.introCard}
+        >
+          <Image
+            source={require("@/assets/images/illustration-bucket.png")}
+            style={styles.introImage}
             resizeMode="contain"
           />
           <View style={styles.introTextContainer}>
             <Text style={[styles.introTitle, { color: colors.primaryDark }]}>خدمة احترافية</Text>
-            <View style={styles.sparkleRow}>
-              <Text style={[styles.introSubtitle, { color: colors.foreground }]}>أنظف</Text>
-              <Text style={styles.sparkleIcon}>✨</Text>
-            </View>
+            <Text style={[styles.introDesc, { color: colors.foreground }]}>
+              فريق مدرب بأعلى معايير الجودة لمنزل و مكان أنظف ✨
+            </Text>
           </View>
-        </View>
+        </LinearGradient>
 
-        <SectionHeader title="✨ خدمات التنظيف" />
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>✨ خدمات التنظيف</Text>
+        </View>
 
         <View style={styles.grid}>
           {SERVICES_GRID.map((service) => (
-            <TouchableOpacity 
-              key={service.id} 
-              style={[styles.gridCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}
+            <TouchableOpacity
+              key={service.id}
+              style={styles.gridCard}
               onPress={() => router.push("/booking")}
               activeOpacity={0.9}
             >
@@ -91,9 +99,11 @@ export default function ServicesScreen() {
               </View>
               <View style={styles.cardContent}>
                 <Text style={[styles.cardTitle, { color: colors.foreground }]}>{service.title}</Text>
-                <Text style={[styles.cardDesc, { color: colors.mutedForeground }]}>{service.desc}</Text>
+                <Text style={[styles.cardDesc, { color: colors.mutedForeground }]} numberOfLines={2}>
+                  {service.desc}
+                </Text>
                 <View style={[styles.cardBtn, { backgroundColor: service.btnColor }]}>
-                  <Feather name="arrow-left" size={16} color="#FFFFFF" />
+                  <Feather name="arrow-left" size={14} color="#FFFFFF" />
                 </View>
               </View>
             </TouchableOpacity>
@@ -102,205 +112,265 @@ export default function ServicesScreen() {
 
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
-            <Feather name="shield" size={20} color={colors.primary} />
+            <Feather name="shield" size={16} color={colors.primary} />
             <Text style={[styles.infoTitle, { color: colors.foreground }]}>ضمان الجودة</Text>
             <Text style={[styles.infoDesc, { color: colors.mutedForeground }]}>نضمن رضاك التام</Text>
           </View>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.divider} />
           <View style={styles.infoItem}>
-            <Feather name="clock" size={20} color={colors.primary} />
+            <Feather name="clock" size={16} color={colors.primary} />
             <Text style={[styles.infoTitle, { color: colors.foreground }]}>في الوقت المحدد</Text>
             <Text style={[styles.infoDesc, { color: colors.mutedForeground }]}>نصل في الموعد المتفق</Text>
           </View>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.divider} />
           <View style={styles.infoItem}>
-            <Feather name="users" size={20} color={colors.primary} />
+            <Feather name="users" size={16} color={colors.primary} />
             <Text style={[styles.infoTitle, { color: colors.foreground }]}>فريق محترف</Text>
             <Text style={[styles.infoDesc, { color: colors.mutedForeground }]}>مدرب و موثوق</Text>
           </View>
         </View>
-
-        <View style={[styles.helpCard, { backgroundColor: colors.secondary, paddingBottom: insets.bottom + 24 }]}>
-          <TouchableOpacity style={[styles.helpBtn, { backgroundColor: colors.card }]}>
-            <Text style={[styles.helpBtnText, { color: colors.foreground }]}>✨ ساعدني</Text>
-          </TouchableOpacity>
-          <Text style={[styles.helpText, { color: colors.foreground }]}>غير متأكد؟ ساعدنا في اختيار الخدمة المناسبة لك</Text>
-        </View>
       </ScrollView>
+
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 14 }]}>
+        <LinearGradient
+          colors={["#60A5FA", "#3B82F6", "#2563EB"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.helpBtn}
+        >
+          <TouchableOpacity style={styles.helpBtnInner} activeOpacity={0.9}>
+            <Text style={styles.sparkle}>✨</Text>
+            <Text style={styles.helpBtnText}>ساعدني</Text>
+          </TouchableOpacity>
+        </LinearGradient>
+        <View style={styles.helpTextContainer}>
+          <Text style={[styles.helpTextTitle, { color: colors.foreground }]}>غير متأكد؟</Text>
+          <Text style={[styles.helpTextSub, { color: colors.mutedForeground }]}>
+            ساعدنا في اختيار الخدمة المناسبة لك
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  iconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  headerTextContainer: {
-    alignItems: "center",
-  },
+  headerCenter: { alignItems: "center" },
   headerTitle: {
     fontFamily: "Cairo_700Bold",
-    fontSize: 18,
+    fontSize: 15,
   },
   headerSubtitle: {
     fontFamily: "Cairo_400Regular",
-    fontSize: 13,
-  },
-  scrollContent: {
-    paddingBottom: 24,
+    fontSize: 11,
+    marginTop: 2,
   },
   introCard: {
-    marginHorizontal: 24,
-    borderRadius: 24,
-    padding: 20,
+    marginHorizontal: 20,
+    borderRadius: 22,
+    padding: 16,
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 22,
+    overflow: "hidden",
   },
   introImage: {
     width: 80,
     height: 80,
-    marginRight: 16,
   },
   introTextContainer: {
     flex: 1,
     alignItems: "flex-end",
+    paddingHorizontal: 12,
   },
   introTitle: {
     fontFamily: "Cairo_700Bold",
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 4,
   },
-  sparkleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+  introDesc: {
+    fontFamily: "Cairo_400Regular",
+    fontSize: 11,
+    textAlign: "right",
+    lineHeight: 17,
   },
-  introSubtitle: {
+  sectionHeader: {
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    alignItems: "flex-end",
+  },
+  sectionTitle: {
     fontFamily: "Cairo_700Bold",
-    fontSize: 24,
-  },
-  sparkleIcon: {
-    fontSize: 20,
+    fontSize: 14,
   },
   grid: {
-    flexDirection: "row-reverse", // RTL grid
+    flexDirection: "row-reverse",
     flexWrap: "wrap",
-    paddingHorizontal: 16,
-    gap: 16,
-    marginBottom: 32,
+    paddingHorizontal: 14,
+    gap: 12,
+    marginBottom: 22,
   },
   gridCard: {
     width: "47%",
-    borderRadius: 24,
+    borderRadius: 22,
     overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
-    shadowRadius: 16,
+    shadowRadius: 12,
     elevation: 3,
   },
   arcContainer: {
-    height: 100,
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
+    height: 110,
+    borderBottomLeftRadius: 80,
+    borderBottomRightRadius: 80,
     alignItems: "center",
-    justifyContent: "flex-end",
-    paddingBottom: 16,
-    marginBottom: 12,
+    justifyContent: "center",
   },
   cardImage: {
-    width: 64,
-    height: 64,
+    width: 78,
+    height: 78,
   },
   cardContent: {
-    padding: 16,
-    paddingTop: 0,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
     alignItems: "flex-end",
   },
   cardTitle: {
     fontFamily: "Cairo_700Bold",
-    fontSize: 16,
+    fontSize: 13,
     marginBottom: 4,
     textAlign: "right",
   },
   cardDesc: {
     fontFamily: "Cairo_400Regular",
-    fontSize: 12,
+    fontSize: 10,
     textAlign: "right",
-    marginBottom: 16,
-    lineHeight: 18,
+    marginBottom: 12,
+    lineHeight: 15,
+    minHeight: 30,
   },
   cardBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    alignSelf: "flex-start",
   },
   infoRow: {
-    flexDirection: "row-reverse", // RTL
-    paddingHorizontal: 24,
-    marginBottom: 32,
-    alignItems: "flex-start",
+    flexDirection: "row-reverse",
+    marginHorizontal: 20,
+    marginBottom: 22,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   infoItem: {
     flex: 1,
     alignItems: "center",
+    paddingHorizontal: 4,
   },
   infoTitle: {
     fontFamily: "Cairo_600SemiBold",
-    fontSize: 13,
-    marginTop: 8,
+    fontSize: 11,
+    marginTop: 6,
     marginBottom: 2,
     textAlign: "center",
   },
   infoDesc: {
     fontFamily: "Cairo_400Regular",
-    fontSize: 11,
+    fontSize: 9,
     textAlign: "center",
   },
   divider: {
     width: 1,
-    height: 40,
-    marginHorizontal: 8,
-    marginTop: 8,
+    height: 38,
+    backgroundColor: "#EEF1F6",
   },
-  helpCard: {
-    marginHorizontal: 24,
-    borderRadius: 24,
-    padding: 16,
-    flexDirection: "row",
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row-reverse",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   helpBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderRadius: 100,
-    marginRight: 12,
+    overflow: "hidden",
+    shadowColor: "#3B82F6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
+  helpBtnInner: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    gap: 6,
+  },
+  sparkle: { fontSize: 14 },
   helpBtnText: {
-    fontFamily: "Cairo_600SemiBold",
+    fontFamily: "Cairo_700Bold",
     fontSize: 13,
+    color: "#FFFFFF",
   },
-  helpText: {
+  helpTextContainer: {
     flex: 1,
-    fontFamily: "Cairo_500Medium",
+    alignItems: "flex-end",
+    paddingHorizontal: 12,
+  },
+  helpTextTitle: {
+    fontFamily: "Cairo_700Bold",
     fontSize: 13,
+    marginBottom: 2,
+  },
+  helpTextSub: {
+    fontFamily: "Cairo_400Regular",
+    fontSize: 10,
     textAlign: "right",
-    lineHeight: 20,
   },
 });

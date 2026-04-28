@@ -160,7 +160,7 @@ export default function BookingScreen() {
                       <Text style={[styles.tagText, { color: colors.mutedForeground }]}>موثوقة</Text>
                     </View>
                     <View style={[styles.tag, { backgroundColor: colors.card }]}>
-                      <MaterialCommunityIcons name="sparkles" size={12} color={colors.primary} />
+                      <MaterialCommunityIcons name="star-four-points" size={12} color={colors.primary} />
                       <Text style={[styles.tagText, { color: colors.mutedForeground }]}>تنظيف احترافي</Text>
                     </View>
                     <View style={[styles.tag, { backgroundColor: colors.card }]}>

@@ -10,7 +10,7 @@ const TAGS = [
   { id: "time", title: "الالتزام بالوقت", icon: "clock-outline" },
   { id: "details", title: "الاهتمام بالتفاصيل", icon: "clipboard-text-outline" },
   { id: "attitude", title: "التعامل الراقي", icon: "heart-outline" },
-  { id: "quality", title: "جودة التنظيف", icon: "sparkles" },
+  { id: "quality", title: "جودة التنظيف", icon: "creation" },
 ];
 
 export default function RatingScreen() {
