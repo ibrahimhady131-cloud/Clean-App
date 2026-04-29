@@ -8,12 +8,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
+const TAGS = [
+  { label: "الاهتمام بالتفاصيل", icon: "checkbox-marked-outline" },
+  { label: "الالتزام بالوقت", icon: "clock-outline" },
+  { label: "التعامل الراقي", icon: "heart-outline" },
+  { label: "جودة التنظيف", icon: "auto-fix" },
+];
+
 export default function RatingScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const [rating, setRating] = useState(4);
   const [comment, setComment] = useState("");
-  const [selectedTags, setSelectedTags] = useState<number[]>([0, 1]);
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
 
   const ratingLabels = ["", "سيء جداً", "سيء", "متوسط", "ممتاز", "رائع"];
 
@@ -28,103 +35,118 @@ export default function RatingScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <View style={[s.root, { backgroundColor: "#F8FAFC" }]}>
         {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <View style={styles.headerTitleContainer}>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>قيم الخدمة</Text>
+        <View style={[s.header, { paddingTop: insets.top + 8 }]}>
+          <TouchableOpacity style={s.hIcon}>
+            <Feather name="help-circle" size={20} color="#1E293B" />
+          </TouchableOpacity>
+          <View style={s.hCenter}>
+            <Text style={s.hTitle}>تقييم الخدمة</Text>
+            <Text style={s.hSub}>كيف كانت تجربتك اليوم؟</Text>
           </View>
-          <TouchableOpacity style={styles.iconCircle} onPress={() => router.back()}>
-            <Feather name="chevron-right" size={24} color={colors.foreground} />
+          <TouchableOpacity style={s.hIcon} onPress={() => router.back()}>
+            <Feather name="arrow-left" size={20} color="#1E293B" />
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
-          {/* Main Card */}
-          <View style={[styles.mainCard, { backgroundColor: colors.card }]}>
-            <Image source={require("@/assets/images/cleaner-fatima.png")} style={styles.avatar} />
-            <Text style={[styles.name, { color: colors.foreground }]}>كيف كانت خدمة أحمد؟</Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>رأيك يساعدنا في تحسين جودة خدماتنا</Text>
-            
-            {/* Stars */}
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity 
-                  key={star} 
-                  onPress={() => {
-                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setRating(star);
-                  }}
-                >
-                  <MaterialCommunityIcons 
-                    name={star <= rating ? "star" : "star-outline"} 
-                    size={48} 
-                    color={star <= rating ? colors.warning : colors.border} 
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={[styles.ratingLabel, { color: colors.warning }]}>{ratingLabels[rating]}</Text>
+        <ScrollView contentContainerStyle={{ paddingBottom: 160 }} showsVerticalScrollIndicator={false}>
+          {/* Profile Card */}
+          <LinearGradient colors={["#EDE9FE", "#F0F4FF"]} style={s.profileCard}>
+            <Image source={require("@/assets/images/cleaner-fatima.png")} style={s.avatar} />
+            <Text style={s.name}>فاطمة أحمد</Text>
+            <Text style={s.role}>منظفة محترفة</Text>
+          </LinearGradient>
+
+          {/* Rating Section */}
+          <Text style={s.ratingHeading}>قيم تجربتك مع فاطمة</Text>
+          <View style={s.starsRow}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity
+                key={star}
+                onPress={() => {
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setRating(star);
+                }}
+              >
+                <MaterialCommunityIcons
+                  name={star <= rating ? "star" : "star-outline"}
+                  size={52}
+                  color={star <= rating ? "#F59E0B" : "#CBD5E1"}
+                />
+              </TouchableOpacity>
+            ))}
           </View>
+          <Text style={s.ratingLabel}>{ratingLabels[rating]}</Text>
 
           {/* Comment Section */}
-          <View style={styles.commentSection}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>اكتب تعليقك</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border }]}
-              placeholder="اكتب ملاحظاتك هنا..."
-              placeholderTextColor={colors.mutedForeground}
-              multiline
-              textAlign="right"
-              textAlignVertical="top"
-              value={comment}
-              onChangeText={setComment}
-            />
+          <View style={s.commentSection}>
+            <Text style={s.sectionTitle}>شاركنا رأيك</Text>
+            <View style={s.commentBox}>
+              <TextInput
+                style={s.input}
+                placeholder="اكتب ملاحظاتك عن الخدمة. رأيك يساعدنا في تقديم تجربة أفضل لك في المستقبل."
+                placeholderTextColor="#94A3B8"
+                multiline
+                textAlign="right"
+                textAlignVertical="top"
+                value={comment}
+                onChangeText={(t) => t.length <= 500 && setComment(t)}
+                maxLength={500}
+              />
+              <View style={s.commentFooter}>
+                <Text style={s.charCount}>{comment.length}/500</Text>
+                <TouchableOpacity>
+                  <Feather name="edit-2" size={18} color="#94A3B8" />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
-          {/* Quick Feedback Tags */}
-          <View style={styles.tagsSection}>
-             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>ما الذي أعجبك؟</Text>
-             <View style={styles.tagsRow}>
-                {["الالتزام بالوقت", "الاحترافية", "نظافة ممتازة", "التعامل الراقي"].map((tag, index) => {
-                  const sel = selectedTags.includes(index);
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      onPress={() => toggleTag(index)}
-                      activeOpacity={0.85}
-                      style={[
-                        styles.tag,
-                        {
-                          backgroundColor: sel ? colors.primaryLight : colors.secondary,
-                          borderColor: sel ? colors.primary : "transparent",
-                          borderWidth: sel ? 1 : 0,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.tagText, { color: sel ? colors.primary : colors.foreground }]}>{tag}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-             </View>
+          {/* Tags */}
+          <View style={s.tagsSection}>
+            <Text style={s.sectionTitle}>ما الذي أعجبك في الخدمة؟</Text>
+            <View style={s.tagsGrid}>
+              {TAGS.map((tag, i) => {
+                const sel = selectedTags.includes(i);
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => toggleTag(i)}
+                    style={[s.tag, sel && { backgroundColor: "#DBEAFE", borderColor: "#3B82F6" }]}
+                  >
+                    <MaterialCommunityIcons name={tag.icon as any} size={18} color={sel ? "#3B82F6" : "#64748B"} />
+                    <Text style={[s.tagText, sel && { color: "#3B82F6" }]}>{tag.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Trust Banner */}
+          <View style={s.trustBanner}>
+            <View style={s.trustContent}>
+              <Text style={s.trustTitle}>تقييمك يهمنا</Text>
+              <View style={s.trustDescRow}>
+                <MaterialCommunityIcons name="star-four-points" size={12} color="#F59E0B" />
+                <Text style={s.trustDesc}>نحرص على تقديم أفضل الخدمات بناءً على ملاحظاتك</Text>
+              </View>
+            </View>
+            <View style={s.trustIconWrap}>
+              <MaterialCommunityIcons name="shield-check" size={36} color="#16C47F" />
+            </View>
           </View>
         </ScrollView>
 
-        {/* Bottom Bar */}
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
-          <TouchableOpacity activeOpacity={0.9} onPress={handleSubmit}>
-            <LinearGradient
-              colors={[colors.accent, colors.accentDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.submitBtn}
-            >
-              <Text style={styles.submitBtnText}>إرسال التقييم</Text>
-            </LinearGradient>
+        {/* Bottom Actions */}
+        <View style={[s.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
+          <TouchableOpacity activeOpacity={0.9} onPress={handleSubmit} style={s.submitBtn}>
+            <Text style={s.submitText}>إرسال التقييم</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.replace("/(tabs)/home" as any)} style={s.skipRow}>
+            <Feather name="chevron-left" size={16} color="#94A3B8" />
+            <Text style={s.skipText}>تخطي التقييم</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -132,137 +154,45 @@ export default function RatingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    gap: 12,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontFamily: "Tajawal_700Bold",
-    fontSize: 18,
-  },
-  mainCard: {
-    marginHorizontal: 24,
-    borderRadius: 32,
-    padding: 32,
-    alignItems: "center",
-    marginBottom: 18,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 4,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 12,
-    borderWidth: 4,
-    borderColor: "#FFFFFF",
-  },
-  name: {
-    fontFamily: "Tajawal_700Bold",
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontFamily: "Tajawal_400Regular",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 14,
-  },
-  starsRow: {
-    flexDirection: "row-reverse",
-    gap: 8,
-  },
-  ratingLabel: {
-    marginTop: 12,
-    fontFamily: "Tajawal_700Bold",
-    fontSize: 18,
-  },
-  commentSection: {
-    paddingHorizontal: 16,
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontFamily: "Tajawal_700Bold",
-    fontSize: 16,
-    marginBottom: 16,
-    textAlign: "right",
-  },
-  input: {
-    height: 120,
-    borderRadius: 20,
-    padding: 16,
-    fontFamily: "Tajawal_500Medium",
-    fontSize: 14,
-    borderWidth: 1,
-  },
-  tagsSection: {
-    paddingHorizontal: 16,
-  },
-  tagsRow: {
-    flexDirection: "row-reverse",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  tag: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
-  },
-  tagText: {
-    fontFamily: "Tajawal_600SemiBold",
-    fontSize: 12,
-  },
-  bottomBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  submitBtn: {
-    height: 60,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  submitBtnText: {
-    color: "#FFFFFF",
-    fontFamily: "Tajawal_700Bold",
-    fontSize: 16,
-  },
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12 },
+  hIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  hCenter: { flex: 1, alignItems: "center" },
+  hTitle: { fontFamily: "Tajawal_700Bold", fontSize: 18, color: "#1E293B" },
+  hSub: { fontFamily: "Tajawal_400Regular", fontSize: 12, color: "#94A3B8", marginTop: 2 },
+
+  profileCard: { marginHorizontal: 24, borderRadius: 28, padding: 28, alignItems: "center", marginBottom: 20 },
+  avatar: { width: 96, height: 96, borderRadius: 48, borderWidth: 4, borderColor: "#FFF", marginBottom: 10 },
+  name: { fontFamily: "Tajawal_700Bold", fontSize: 18, color: "#1E293B" },
+  role: { fontFamily: "Tajawal_500Medium", fontSize: 13, color: "#64748B", marginTop: 2 },
+
+  ratingHeading: { fontFamily: "Tajawal_700Bold", fontSize: 16, color: "#1E293B", textAlign: "center", marginBottom: 14 },
+  starsRow: { flexDirection: "row-reverse", justifyContent: "center", gap: 8, marginBottom: 6 },
+  ratingLabel: { fontFamily: "Tajawal_700Bold", fontSize: 18, color: "#16C47F", textAlign: "center", marginBottom: 20 },
+
+  commentSection: { paddingHorizontal: 20, marginBottom: 16 },
+  sectionTitle: { fontFamily: "Tajawal_700Bold", fontSize: 15, color: "#1E293B", textAlign: "right", marginBottom: 10 },
+  commentBox: { backgroundColor: "#FFF", borderRadius: 20, borderWidth: 1, borderColor: "#E2E8F0", padding: 14, minHeight: 120 },
+  input: { fontFamily: "Tajawal_400Regular", fontSize: 13, color: "#1E293B", minHeight: 80, textAlignVertical: "top" },
+  commentFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 6 },
+  charCount: { fontFamily: "Tajawal_400Regular", fontSize: 12, color: "#94A3B8" },
+
+  tagsSection: { paddingHorizontal: 20, marginBottom: 16 },
+  tagsGrid: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 10 },
+  tag: { flexDirection: "row-reverse", alignItems: "center", gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14, backgroundColor: "#FFF", borderWidth: 1.5, borderColor: "#E2E8F0" },
+  tagText: { fontFamily: "Tajawal_600SemiBold", fontSize: 13, color: "#64748B" },
+
+  trustBanner: { marginHorizontal: 20, borderRadius: 20, backgroundColor: "#F0FDF4", padding: 16, flexDirection: "row-reverse", alignItems: "center", marginBottom: 16 },
+  trustContent: { flex: 1, alignItems: "flex-end" },
+  trustTitle: { fontFamily: "Tajawal_700Bold", fontSize: 15, color: "#1E293B", marginBottom: 4 },
+  trustDescRow: { flexDirection: "row-reverse", alignItems: "center", gap: 4 },
+  trustDesc: { fontFamily: "Tajawal_400Regular", fontSize: 11, color: "#64748B" },
+  trustIconWrap: { width: 56, height: 56, borderRadius: 28, backgroundColor: "#DCFCE7", alignItems: "center", justifyContent: "center", marginLeft: 12 },
+
+  bottomBar: { position: "absolute", bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 16, backgroundColor: "#FFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 8 },
+  submitBtn: { height: 56, borderRadius: 16, backgroundColor: "#3B82F6", alignItems: "center", justifyContent: "center" },
+  submitText: { fontFamily: "Tajawal_700Bold", fontSize: 16, color: "#FFF" },
+  skipRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 12 },
+  skipText: { fontFamily: "Tajawal_500Medium", fontSize: 14, color: "#94A3B8" },
 });
