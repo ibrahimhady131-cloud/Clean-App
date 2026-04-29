@@ -15,14 +15,14 @@ import { FALLBACK_CATEGORIES } from "@/lib/serviceImages";
 import { useI18n } from "@/lib/i18n";
 
 const SERVICE_CARD_DATA: Record<string, { image: ImageSourcePropType; bgColor: string }> = {
-  homes:     { image: require("@/assets/images/illustration-vacuum.png"), bgColor: "#E8F5EE" },
-  deep:      { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#FCE4EC" },
-  offices:   { image: require("@/assets/images/illustration-office.png"), bgColor: "#FCE4EC" },
-  furniture: { image: require("@/assets/images/illustration-armchair.png"), bgColor: "#E8F5EE" },
-  kitchens:  { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#FFF3E0" },
-  villas:    { image: require("@/assets/images/illustration-vacuum.png"), bgColor: "#E8EAF6" },
-  bathrooms: { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#E0F7FA" },
-  tanks:     { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#E3F2FD" },
+  homes:     { image: require("@/assets/images/illustration-vacuum.png"), bgColor: "#D1FAE5" },
+  deep:      { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#DBEAFE" },
+  offices:   { image: require("@/assets/images/illustration-office.png"), bgColor: "#FEF3C7" },
+  furniture: { image: require("@/assets/images/illustration-armchair.png"), bgColor: "#FCE7F3" },
+  kitchens:  { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#FFF7ED" },
+  villas:    { image: require("@/assets/images/illustration-vacuum.png"), bgColor: "#EDE9FE" },
+  bathrooms: { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#ECFEFF" },
+  tanks:     { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#E0F2FE" },
 };
 
 const { height: SCREEN_H } = Dimensions.get("window");
@@ -400,27 +400,27 @@ const styles = StyleSheet.create({
   seeAll: { fontFamily: "Tajawal_700Bold", fontSize: 12 },
 
   svcCard: {
-    width: 110,
+    width: 140,
     alignItems: "center",
     marginBottom: 4,
   },
   svcCardImageWrap: {
-    width: 100,
-    height: 90,
-    borderRadius: 20,
+    width: 128,
+    height: 115,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: 10,
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  svcCardImage: { width: 60, height: 60 },
+  svcCardImage: { width: 80, height: 80 },
   svcCardTitle: {
     fontFamily: "Tajawal_700Bold",
-    fontSize: 12.5,
+    fontSize: 13.5,
     color: "#1E293B",
     textAlign: "center",
   },

@@ -22,52 +22,47 @@ const STATS: Stat[] = [
 ];
 
 const HERO_SLIDES = [
-  {
-    id: "weekly",
-    badge: "عرض الأسبوع ⭐",
-    discount: "20",
-    title: "على جميع خدمات التنظيف",
-    subtitle: "عرض لفترة محدودة على جميع الخدمات",
-    cta: "احجز الآن",
-    image: require("@/assets/images/offers-hero-basket.jpg"),
-    bg: ["#E8F5EE", "#D1FAE5"] as const,
-    textColor: "#0F172A",
-  },
-  {
-    id: "homes",
-    badge: "عرض خاص",
-    discount: "30",
-    title: "تنظيف المنازل",
-    subtitle: "للفترة محدودة! احجز الآن واستفد من خصم يصل إلى 30%",
-    cta: "احجز الآن",
-    image: require("@/assets/images/illustration-bucket.png"),
-    bg: ["#FEF3C7", "#FDE68A"] as const,
-    textColor: "#0F172A",
-  },
+  { id: "s1", image: require("@/assets/images/offers-hero-1.png") },
+  { id: "s2", image: require("@/assets/images/offers-hero-2.png") },
+  { id: "s3", image: require("@/assets/images/offers-hero-3.png") },
 ];
 
 const SEASONAL = [
   {
     id: "eid",
-    title: "عرض عيد الأضحى المبارك",
-    subtitle: "خصم على جميع خدمات التنظيف",
-    discount: "25% خصم",
-    countdown: { days: "12", hours: "06", minutes: "15" },
-    bg: "#1E3A5F",
+    label: "عرض العيد",
+    title: "عرض عيد الأضحى",
+    subtitle: "خصم\nعلى جميع خدمات التنظيف",
+    discount: "25",
+    countdown: { days: "05", hours: "18", minutes: "32" },
+    bg: ["#FFF5F5", "#FFF0F0"] as const,
     accentBg: "#16C47F",
-    isLight: false,
-    decoration: "eid",
+    textColor: "#0F172A",
+    image: require("@/assets/images/illustration-bucket.png"),
+  },
+  {
+    id: "spring",
+    label: "تنظيف الربيع",
+    title: "تنظيف الربيع",
+    subtitle: "خصم\nعلى التنظيف العميق",
+    discount: "20",
+    countdown: { days: "08", hours: "21", minutes: "47" },
+    bg: ["#F0FFF4", "#E8F5EE"] as const,
+    accentBg: "#16C47F",
+    textColor: "#0F172A",
+    image: require("@/assets/images/illustration-vacuum.png"),
   },
   {
     id: "summer",
-    title: "عرض الصيف",
-    subtitle: "نظافة أكثر... وإنعاش أكبر",
-    discount: "20% خصم",
-    countdown: { days: "10", hours: "08", minutes: "45" },
-    bg: "#DBEAFE",
-    accentBg: "#2F80ED",
-    isLight: true,
-    decoration: "palm",
+    label: "استعد للصيف",
+    title: "استعد للصيف",
+    subtitle: "خصم\nعلى تنظيف المكيفات",
+    discount: "15",
+    countdown: { days: "10", hours: "15", minutes: "30" },
+    bg: ["#F0F9FF", "#E0F2FE"] as const,
+    accentBg: "#3B82F6",
+    textColor: "#0F172A",
+    image: require("@/assets/images/illustration-office.png"),
   },
 ];
 
@@ -142,7 +137,7 @@ export default function OffersScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 130 }} showsVerticalScrollIndicator={false}>
-        {/* Hero Slider */}
+        {/* Hero Slider - Full image banners */}
         <View style={styles.heroWrap}>
           <ScrollView
             ref={heroScrollRef}
@@ -154,31 +149,9 @@ export default function OffersScreen() {
             contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
           >
             {HERO_SLIDES.map((slide) => (
-              <LinearGradient
-                key={slide.id}
-                colors={[...slide.bg]}
-                style={[styles.heroCard, { width: HERO_CARD_W }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.heroRight}>
-                  <View style={styles.heroBadge}>
-                    <Text style={styles.heroBadgeText}>{slide.badge}</Text>
-                  </View>
-                  <View style={styles.heroDiscountRow}>
-                    <Text style={[styles.heroKhasm, { color: slide.textColor }]}>خصم</Text>
-                    <Text style={[styles.heroDiscount, { color: slide.textColor }]}>{slide.discount}%</Text>
-                  </View>
-                  <Text style={[styles.heroTitle, { color: slide.textColor }]}>{slide.title}</Text>
-                  <Text style={[styles.heroSubtitle, { color: "#475569" }]}>{slide.subtitle}</Text>
-                  <TouchableOpacity style={[styles.heroCta, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.heroCtaText}>{slide.cta}</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.heroLeft}>
-                  <Image source={slide.image} style={styles.heroImage} resizeMode="contain" />
-                </View>
-              </LinearGradient>
+              <View key={slide.id} style={[styles.heroCard, { width: HERO_CARD_W }]}>
+                <Image source={slide.image} style={styles.heroFullImage} resizeMode="cover" />
+              </View>
             ))}
           </ScrollView>
 
@@ -222,84 +195,62 @@ export default function OffersScreen() {
           <TouchableOpacity>
             <Text style={[styles.seeAll, { color: colors.primary }]}>عرض الكل</Text>
           </TouchableOpacity>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>عروض الموسم</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>عروض موسمية</Text>
         </View>
 
-        <View style={styles.seasonalRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 10, marginBottom: 22 }}
+        >
           {SEASONAL.map((s) => (
             <TouchableOpacity
               key={s.id}
-              style={[styles.seasonalCard, { backgroundColor: s.bg }]}
               activeOpacity={0.85}
+              style={{ width: 180 }}
             >
-              {s.decoration === "eid" && (
-                <View style={styles.seasonalDecorationMoon}>
-                  <MaterialCommunityIcons name="mosque" size={36} color="#FCD34D" />
-                  <MaterialCommunityIcons name="star-crescent" size={28} color="#F59E0B" style={{ marginTop: 4 }} />
-                </View>
-              )}
-              {s.decoration === "palm" && (
-                <View style={styles.seasonalDecorationSummer}>
-                  <MaterialCommunityIcons name="palm-tree" size={32} color="#10B981" />
-                  <MaterialCommunityIcons name="umbrella-beach" size={28} color="#F59E0B" style={{ marginTop: 4 }} />
-                </View>
-              )}
-
-              <Text
-                style={[
-                  styles.seasonalTitle,
-                  { color: s.isLight ? "#0F172A" : "#FFFFFF" },
-                ]}
+              <LinearGradient
+                colors={[...s.bg]}
+                style={styles.seasonalCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
               >
-                {s.title}
-              </Text>
-              <Text
-                style={[
-                  styles.seasonalSubtitle,
-                  { color: s.isLight ? "#475569" : "rgba(255,255,255,0.85)" },
-                ]}
-                numberOfLines={2}
-              >
-                {s.subtitle}
-              </Text>
+                {/* Label badge */}
+                <View style={[styles.seasonalLabel, { backgroundColor: s.accentBg }]}>
+                  <Text style={styles.seasonalLabelText}>{s.label}</Text>
+                </View>
 
-              <View style={[styles.seasonalDiscountPill, { backgroundColor: s.accentBg }]}>
-                <Text style={styles.seasonalDiscountText}>{s.discount}</Text>
-              </View>
+                {/* Image */}
+                <Image source={s.image} style={styles.seasonalImage} resizeMode="contain" />
 
-              <Text
-                style={[
-                  styles.countdownLabel,
-                  { color: s.isLight ? "#475569" : "rgba(255,255,255,0.7)" },
-                ]}
-              >
-                ينتهي خلال
-              </Text>
-              <View style={styles.countdownRow}>
-                <View style={styles.countdownBox}>
-                  <Text style={[styles.countdownNum, { color: s.isLight ? "#0F172A" : "#FFFFFF" }]}>
-                    {s.countdown.minutes}
-                  </Text>
-                  <Text style={[styles.countdownUnit, { color: s.isLight ? "#475569" : "rgba(255,255,255,0.7)" }]}>د</Text>
+                {/* Discount */}
+                <Text style={[styles.seasonalSubtitle, { color: s.textColor }]}>{s.subtitle}</Text>
+                <Text style={[styles.seasonalDiscount, { color: s.accentBg }]}>{s.discount}%</Text>
+
+                {/* Countdown */}
+                <View style={styles.seasonalCountdownWrap}>
+                  <Text style={styles.seasonalCountdownLabel}>ينتهي خلال</Text>
+                  <View style={styles.countdownRow}>
+                    <View style={styles.countdownBox}>
+                      <Text style={[styles.countdownNum, { color: s.accentBg }]}>{s.countdown.minutes}</Text>
+                      <Text style={styles.countdownUnit}>د</Text>
+                    </View>
+                    <Text style={styles.countdownSep}>:</Text>
+                    <View style={styles.countdownBox}>
+                      <Text style={[styles.countdownNum, { color: s.accentBg }]}>{s.countdown.hours}</Text>
+                      <Text style={styles.countdownUnit}>س</Text>
+                    </View>
+                    <Text style={styles.countdownSep}>:</Text>
+                    <View style={styles.countdownBox}>
+                      <Text style={[styles.countdownNum, { color: s.accentBg }]}>{s.countdown.days}</Text>
+                      <Text style={styles.countdownUnit}>أيام</Text>
+                    </View>
+                  </View>
                 </View>
-                <Text style={[styles.countdownSep, { color: s.isLight ? "#475569" : "rgba(255,255,255,0.5)" }]}>:</Text>
-                <View style={styles.countdownBox}>
-                  <Text style={[styles.countdownNum, { color: s.isLight ? "#0F172A" : "#FFFFFF" }]}>
-                    {s.countdown.hours}
-                  </Text>
-                  <Text style={[styles.countdownUnit, { color: s.isLight ? "#475569" : "rgba(255,255,255,0.7)" }]}>س</Text>
-                </View>
-                <Text style={[styles.countdownSep, { color: s.isLight ? "#475569" : "rgba(255,255,255,0.5)" }]}>:</Text>
-                <View style={styles.countdownBox}>
-                  <Text style={[styles.countdownNum, { color: s.isLight ? "#0F172A" : "#FFFFFF" }]}>
-                    {s.countdown.days}
-                  </Text>
-                  <Text style={[styles.countdownUnit, { color: s.isLight ? "#475569" : "rgba(255,255,255,0.7)" }]}>أيام</Text>
-                </View>
-              </View>
+              </LinearGradient>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         {/* Premium Coupons */}
         <View style={styles.sectionHeader}>
@@ -404,40 +355,14 @@ const styles = StyleSheet.create({
   // Hero
   heroWrap: { marginBottom: 18 },
   heroCard: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
     borderRadius: 24,
-    padding: 18,
-    minHeight: 170,
     overflow: "hidden",
+    height: 220,
   },
-  heroLeft: { width: 130, height: 130, alignItems: "center", justifyContent: "center" },
-  heroImage: { width: "100%", height: "100%" },
-  heroRight: { flex: 1, alignItems: "flex-end", paddingRight: 8 },
-  heroBadge: {
-    backgroundColor: "rgba(255,255,255,0.75)",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 100,
-    marginBottom: 8,
+  heroFullImage: {
+    width: "100%",
+    height: "100%",
   },
-  heroBadgeText: { fontFamily: "Tajawal_700Bold", fontSize: 11, color: "#16C47F" },
-  heroDiscountRow: {
-    flexDirection: "row-reverse",
-    alignItems: "baseline",
-    gap: 6,
-    marginBottom: 4,
-  },
-  heroKhasm: { fontFamily: "Tajawal_700Bold", fontSize: 22 },
-  heroDiscount: { fontFamily: "Tajawal_700Bold", fontSize: 34, lineHeight: 38 },
-  heroTitle: { fontFamily: "Tajawal_700Bold", fontSize: 14, marginBottom: 4 },
-  heroSubtitle: { fontFamily: "Tajawal_400Regular", fontSize: 11, lineHeight: 16, marginBottom: 10 },
-  heroCta: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 100,
-  },
-  heroCtaText: { color: "#FFF", fontFamily: "Tajawal_700Bold", fontSize: 12 },
   dotsRow: { flexDirection: "row", justifyContent: "center", gap: 5, marginTop: 12 },
   pageDot: { height: 6, borderRadius: 3 },
 
@@ -483,38 +408,30 @@ const styles = StyleSheet.create({
   seeAll: { fontFamily: "Tajawal_600SemiBold", fontSize: 13 },
 
   // Seasonal cards
-  seasonalRow: {
-    flexDirection: "row-reverse",
-    paddingHorizontal: 16,
-    gap: 10,
-    marginBottom: 22,
-  },
   seasonalCard: {
-    flex: 1,
-    borderRadius: 22,
-    padding: 16,
-    minHeight: 180,
-    overflow: "hidden",
-    position: "relative",
+    borderRadius: 20,
+    padding: 14,
+    alignItems: "center",
+    minHeight: 260,
   },
-  seasonalDecorationMoon: { position: "absolute", left: 12, top: 12 },
-  seasonalDecorationSummer: { position: "absolute", left: 12, top: 12 },
-  seasonalTitle: { fontFamily: "Tajawal_700Bold", fontSize: 14, textAlign: "right", marginBottom: 4 },
-  seasonalSubtitle: { fontFamily: "Tajawal_400Regular", fontSize: 11, textAlign: "right", marginBottom: 10, lineHeight: 16 },
-  seasonalDiscountPill: {
-    alignSelf: "flex-end",
-    paddingHorizontal: 10,
+  seasonalLabel: {
+    alignSelf: "center",
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 100,
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  seasonalDiscountText: { color: "#FFFFFF", fontFamily: "Tajawal_700Bold", fontSize: 11 },
-  countdownLabel: { fontFamily: "Tajawal_500Medium", fontSize: 10, textAlign: "right", marginBottom: 4 },
+  seasonalLabelText: { fontFamily: "Tajawal_700Bold", fontSize: 11, color: "#FFF" },
+  seasonalImage: { width: 70, height: 70, marginBottom: 8 },
+  seasonalSubtitle: { fontFamily: "Tajawal_500Medium", fontSize: 11, textAlign: "center", lineHeight: 16, marginBottom: 4 },
+  seasonalDiscount: { fontFamily: "Tajawal_700Bold", fontSize: 32, textAlign: "center", marginBottom: 6 },
+  seasonalCountdownWrap: { alignItems: "center", marginTop: 4 },
+  seasonalCountdownLabel: { fontFamily: "Tajawal_500Medium", fontSize: 10, color: "#64748B", marginBottom: 4 },
   countdownRow: { flexDirection: "row-reverse", alignItems: "center", gap: 4 },
-  countdownBox: { alignItems: "center", minWidth: 22 },
-  countdownNum: { fontFamily: "Tajawal_700Bold", fontSize: 14 },
-  countdownUnit: { fontFamily: "Tajawal_400Regular", fontSize: 9 },
-  countdownSep: { fontFamily: "Tajawal_700Bold", fontSize: 14 },
+  countdownBox: { alignItems: "center", minWidth: 24 },
+  countdownNum: { fontFamily: "Tajawal_700Bold", fontSize: 15 },
+  countdownUnit: { fontFamily: "Tajawal_400Regular", fontSize: 9, color: "#64748B" },
+  countdownSep: { fontFamily: "Tajawal_700Bold", fontSize: 14, color: "#94A3B8" },
 
   // Coupons
   couponCard: {
