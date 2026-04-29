@@ -11,19 +11,20 @@ export default function TabLayout() {
         const routeName = state.routes[state.index]?.name;
         const map: Record<string, any> = {
           home: "home",
-          profile: "profile",
+          offers: "offers",
           bookings: "bookings",
           chat: "chat",
+          profile: "profile",
         };
         return <FloatingTabBar active={map[routeName] ?? null} />;
       }}
     >
       <Tabs.Screen name="home" />
-      <Tabs.Screen name="profile" />
+      <Tabs.Screen name="offers" />
       <Tabs.Screen name="bookings" />
       <Tabs.Screen name="chat" />
+      <Tabs.Screen name="profile" />
       <Tabs.Screen name="placeholder" options={{ href: null }} />
-      <Tabs.Screen name="offers" options={{ href: null }} />
     </Tabs>
   );
 }
