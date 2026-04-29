@@ -10,12 +10,11 @@ import GuestEmpty from "@/components/GuestEmpty";
 import { supabase } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
 
-const MENU = [
-  { id: "pay", title: "طرق الدفع", sub: "إدارة بطاقاتك وطرق الدفع", icon: "credit-card", color: "#16C47F", bg: "#DCFCE7", path: "/payment-methods" },
-  { id: "orders", title: "سجل الطلبات", sub: "عرض طلباتك السابقة وحالتها", icon: "calendar", color: "#3B82F6", bg: "#DBEAFE", path: "/(tabs)/bookings" },
-  { id: "offers", title: "العروض والخصومات", sub: "تصفح أحدث العروض والخصومات", icon: "tag", color: "#EC4899", bg: "#FCE7F3", path: "/(tabs)/offers" },
-  { id: "settings", title: "الإعدادات", sub: "إدارة الحساب والتطبيق", icon: "settings", color: "#6B7280", bg: "#F3F4F6", path: "/settings" },
-  { id: "help", title: "المساعدة والدعم", sub: "الأسئلة الشائعة وطرق التواصل", icon: "headphones", color: "#F97316", bg: "#FFF7ED", path: "/help" },
+const MENU_KEYS = [
+  { id: "orders", titleKey: "my_orders", subKey: "my_orders_sub", icon: "calendar", color: "#3B82F6", bg: "#DBEAFE", path: "/(tabs)/bookings" },
+  { id: "offers", titleKey: "offers_disc", subKey: "offers_disc_sub", icon: "tag", color: "#EC4899", bg: "#FCE7F3", path: "/(tabs)/offers" },
+  { id: "settings", titleKey: "settings", subKey: "settings_sub", icon: "settings", color: "#6B7280", bg: "#F3F4F6", path: "/settings" },
+  { id: "help", titleKey: "help_support", subKey: "help_support_sub", icon: "headphones", color: "#F97316", bg: "#FFF7ED", path: "/help" },
 ];
 
 export default function ProfileScreen() {
@@ -23,12 +22,13 @@ export default function ProfileScreen() {
   const colors = useColors();
   const { t } = useI18n();
   const { session, profile, signOut } = useAuth();
+  const MENU = MENU_KEYS.map((m) => ({ ...m, title: t(m.titleKey), sub: t(m.subKey) }));
   const [addresses, setAddresses] = useState<any[]>([]);
 
   const loadData = useCallback(async () => {
     if (!session?.user) return;
     const { data } = await supabase.from("addresses").select("*").eq("user_id", session.user.id).order("is_default", { ascending: false });
-    if (data && data.length > 0) setAddresses(data);
+    if (data) setAddresses(data);
   }, [session]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -62,8 +62,8 @@ export default function ProfileScreen() {
           <View style={s.notifDot} />
         </TouchableOpacity>
         <View style={s.hCenter}>
-          <Text style={s.hTitle}>ملفي الشخصي</Text>
-          <Text style={s.hSub}>إدارة معلوماتك وخدماتك</Text>
+          <Text style={s.hTitle}>{t("profile_title")}</Text>
+          <Text style={s.hSub}>{t("profile_sub")}</Text>
         </View>
         <TouchableOpacity style={s.hIcon} onPress={() => router.push("/settings")}>
           <Feather name="settings" size={20} color="#1E293B" />

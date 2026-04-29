@@ -7,7 +7,7 @@ import * as Haptics from "expo-haptics";
 
 import { useColors } from "@/hooks/useColors";
 
-type ActiveKey = "home" | "offers" | "bookings" | "chat" | "profile" | "services" | null;
+type ActiveKey = "home" | "offers" | "bookings" | "chat" | "profile" | "services" | "wallet" | null;
 
 type Props = {
   active?: ActiveKey;
@@ -33,7 +33,7 @@ export default function FloatingTabBar({ active = null, variant = "user" }: Prop
 
   const providerItems: { key: ActiveKey; label: string; icon: string; iconLib: "feather" | "mci"; path: string }[] = [
     { key: "home", label: "لوحة التحكم", icon: "grid", iconLib: "feather", path: "/(provider)/home" },
-    { key: "bookings", label: "الطلبات", icon: "briefcase", iconLib: "feather", path: "/(provider)/bookings" },
+    { key: "wallet", label: "المحفظة", icon: "credit-card", iconLib: "feather", path: "/(provider)/wallet" },
     { key: "chat", label: "الرسائل", icon: "message-circle", iconLib: "feather", path: "/(provider)/chat" },
     { key: "profile", label: "الملف الشخصي", icon: "user", iconLib: "feather", path: "/(provider)/profile" },
   ];
