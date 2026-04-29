@@ -61,6 +61,11 @@ export default function OffersScreen() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [dot, setDot] = useState(0);
 
+  useEffect(() => {
+    const id = setInterval(() => setDot((p) => (p + 1) % 3), 3000);
+    return () => clearInterval(id);
+  }, []);
+
   const copyCode = () => {
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (Platform.OS === "web" && typeof navigator !== "undefined" && navigator.clipboard) {
@@ -128,7 +133,9 @@ export default function OffersScreen() {
           </LinearGradient>
           <View style={s.dots}>
             {[0, 1, 2].map((i) => (
-              <View key={i} style={[s.dot, { backgroundColor: dot === i ? "#3B82F6" : "#CBD5E1", width: dot === i ? 20 : 8 }]} />
+              <TouchableOpacity key={i} onPress={() => setDot(i)} activeOpacity={0.7}>
+                <View style={[s.dot, { backgroundColor: dot === i ? "#3B82F6" : "#CBD5E1", width: dot === i ? 20 : 8 }]} />
+              </TouchableOpacity>
             ))}
           </View>
         </View>

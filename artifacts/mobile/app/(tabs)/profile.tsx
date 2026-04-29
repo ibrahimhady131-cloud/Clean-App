@@ -141,7 +141,7 @@ export default function ProfileScreen() {
                     </View>
                   )}
                   <View style={s.addrTextWrap}>
-                    <Text style={s.addrTitle}>{addr.title}</Text>
+                    <Text style={s.addrTitle}>{addr.title || "عنوان"}</Text>
                     <Text style={s.addrSub} numberOfLines={1}>{addr.address || addr.street || ""}</Text>
                   </View>
                   <View style={[s.addrIcon, { backgroundColor: addr.iconBg || "#DCFCE7" }]}>
