@@ -53,7 +53,7 @@ export default function FloatingTabBar({ active = null, variant = "user" }: Prop
     <View
       style={[
         styles.container,
-        { paddingTop: 9, marginTop: -7, marginBottom: -7, paddingBottom: 79, backgroundColor: colors.card },
+        { paddingBottom: insets.bottom + 8, backgroundColor: colors.card },
       ]}
     >
       {items.slice(0, 2).map((it) => (
