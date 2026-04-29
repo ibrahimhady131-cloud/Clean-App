@@ -8,20 +8,23 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/lib/auth";
 import GuestEmpty from "@/components/GuestEmpty";
 import { supabase } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 
-const MENU_ITEMS = [
-  { id: "1", title: "طلباتي", subtitle: "إدارة جميع حجوزاتك", icon: "shopping-bag", color: "#16C47F", path: "/(tabs)/bookings" },
-  { id: "2", title: "المفضلة", subtitle: "العمال المفضلين لديك", icon: "heart", color: "#EC4899", path: "/favorites" },
-  { id: "3", title: "العروض والخصومات", subtitle: "أحدث العروض الحصرية", icon: "tag", color: "#F59E0B", path: "/(tabs)/offers" },
-  { id: "4", title: "دعوة الأصدقاء", subtitle: "اربح 50 ر.س لكل صديق", icon: "users", color: "#8B5CF6", path: "/referrals" },
-  { id: "5", title: "الإعدادات", subtitle: "إدارة الحساب والتنبيهات", icon: "settings", color: "#6B7280", path: "/settings" },
-  { id: "6", title: "المساعدة والدعم", subtitle: "تواصل معنا في أي وقت", icon: "headphones", color: "#FB923C", path: "/help" },
+const MENU_KEYS = [
+  { id: "1", titleKey: "my_orders",       subKey: "my_orders_sub",       icon: "shopping-bag", color: "#16C47F", path: "/(tabs)/bookings" },
+  { id: "2", titleKey: "favorites",       subKey: "favorites_sub",       icon: "heart",        color: "#EC4899", path: "/favorites" },
+  { id: "3", titleKey: "offers_disc",     subKey: "offers_disc_sub",     icon: "tag",          color: "#F59E0B", path: "/(tabs)/offers" },
+  { id: "4", titleKey: "invite_friends",  subKey: "invite_friends_sub",  icon: "users",        color: "#8B5CF6", path: "/referrals" },
+  { id: "5", titleKey: "settings",        subKey: "settings_sub",        icon: "settings",     color: "#6B7280", path: "/settings" },
+  { id: "6", titleKey: "help_support",    subKey: "help_support_sub",    icon: "headphones",   color: "#FB923C", path: "/help" },
 ];
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { t } = useI18n();
   const { session, profile, signOut } = useAuth();
+  const MENU_ITEMS = MENU_KEYS.map((m) => ({ ...m, title: t(m.titleKey), subtitle: t(m.subKey) }));
   const [addresses, setAddresses] = useState<any[]>([]);
   const [bookingsCount, setBookingsCount] = useState(0);
 
@@ -39,10 +42,10 @@ export default function ProfileScreen() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const onSignOut = () => {
-    Alert.alert("تسجيل الخروج", "هل تريد تسجيل الخروج من حسابك؟", [
-      { text: "إلغاء", style: "cancel" },
+    Alert.alert(t("signout"), t("signout_q"), [
+      { text: t("cancel"), style: "cancel" },
       {
-        text: "خروج",
+        text: t("exit"),
         style: "destructive",
         onPress: async () => {
           await signOut();
@@ -55,12 +58,12 @@ export default function ProfileScreen() {
   if (!session) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <GuestEmpty title="حسابك الشخصي" subtitle="سجّل دخولك لإدارة عناوينك وحجوزاتك" icon="account-circle-outline" />
+        <GuestEmpty title={t("profile_title")} subtitle={t("profile_sub")} icon="account-circle-outline" />
       </View>
     );
   }
 
-  const initials = (profile?.full_name || "م").trim().split(" ").map((s) => s[0]).slice(0, 2).join("");
+  const initials = (profile?.full_name || t("the_user")).trim().split(" ").map((s) => s[0]).slice(0, 2).join("");
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -75,8 +78,8 @@ export default function ProfileScreen() {
            </TouchableOpacity>
         </View>
         <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>الملف الشخصي</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>إدارة حسابك وطلباتك</Text>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>{t("profile_title")}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>{t("profile_sub")}</Text>
         </View>
       </View>
 
@@ -92,13 +95,13 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             
             <View style={styles.profileInfo}>
-               <Text style={[styles.userName, { color: colors.foreground }]}>{profile?.full_name || "المستخدم"}</Text>
+               <Text style={[styles.userName, { color: colors.foreground }]}>{profile?.full_name || t("the_user")}</Text>
                {!!profile?.phone && <Text style={[styles.userContact, { color: colors.mutedForeground }]}>{profile.phone}</Text>}
                {!!profile?.email && <Text style={[styles.userContact, { color: colors.mutedForeground }]}>{profile.email}</Text>}
                
                <View style={[styles.premiumPill, { backgroundColor: colors.successLight }]}>
                   <MaterialCommunityIcons name="shopping-outline" size={14} color={colors.success} />
-                  <Text style={[styles.premiumText, { color: colors.success }]}>{bookingsCount} طلب مكتمل</Text>
+                  <Text style={[styles.premiumText, { color: colors.success }]}>{bookingsCount} {t("bookings_completed")}</Text>
                </View>
             </View>
 
@@ -140,7 +143,7 @@ export default function ProfileScreen() {
                     <View style={styles.itemTitleRow}>
                       {item.is_default && (
                         <View style={[styles.defaultBadge, { backgroundColor: colors.successLight }]}>
-                          <Text style={[styles.defaultBadgeText, { color: colors.success }]}>افتراضي</Text>
+                          <Text style={[styles.defaultBadgeText, { color: colors.success }]}>{t("default")}</Text>
                         </View>
                       )}
                       <Text style={[styles.itemTitle, { color: colors.foreground }]}>{item.title || "عنوان"}</Text>
@@ -188,7 +191,7 @@ export default function ProfileScreen() {
           onPress={onSignOut}
         >
           <Feather name="log-out" size={18} color="#EF4444" />
-          <Text style={[styles.signOutText, { color: "#EF4444" }]}>تسجيل الخروج</Text>
+          <Text style={[styles.signOutText, { color: "#EF4444" }]}>{t("signout")}</Text>
         </TouchableOpacity>
 
       </ScrollView>

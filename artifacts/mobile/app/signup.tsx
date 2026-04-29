@@ -6,10 +6,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useAuth, type Role } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 
 export default function SignupScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { t } = useI18n();
   const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -19,14 +21,14 @@ export default function SignupScreen() {
   const [busy, setBusy] = useState(false);
 
   const onSubmit = async () => {
-    if (!name || !email || !pwd) return Alert.alert("تنبيه", "أكمل جميع الحقول");
-    if (pwd.length < 6) return Alert.alert("تنبيه", "كلمة المرور يجب 6 أحرف فأكثر");
+    if (!name || !email || !pwd) return Alert.alert(t("error"), t("enter_credentials"));
+    if (pwd.length < 6) return Alert.alert(t("error"), "Password must be at least 6 characters");
     setBusy(true);
     const { error } = await signUp({ email: email.trim(), password: pwd, full_name: name, phone, role });
     setBusy(false);
-    if (error) return Alert.alert("خطأ", error);
-    Alert.alert("تم", "تم إنشاء الحساب. سجّل الدخول للمتابعة.", [
-      { text: "حسناً", onPress: () => router.replace("/login") },
+    if (error) return Alert.alert(t("error"), error);
+    Alert.alert(t("ok"), "Account created. Sign in to continue.", [
+      { text: t("ok"), onPress: () => router.replace("/login") },
     ]);
   };
 
@@ -39,29 +41,29 @@ export default function SignupScreen() {
         <View style={[styles.logo, { backgroundColor: colors.primary }]}>
           <MaterialCommunityIcons name="broom" size={32} color="#FFF" />
         </View>
-        <Text style={[styles.title, { color: colors.foreground }]}>إنشاء حساب جديد</Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]}>اختر نوع الحساب وأدخل بياناتك</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t("signup_title")}</Text>
+        <Text style={[styles.sub, { color: colors.mutedForeground }]}>{t("account_type")}</Text>
 
         <View style={styles.roleRow}>
           <TouchableOpacity
             onPress={() => setRole("user")}
             style={[styles.roleC, { borderColor: role === "user" ? colors.primary : colors.border, backgroundColor: role === "user" ? colors.primaryLight : colors.card }]}>
             <Feather name="user" size={20} color={role === "user" ? colors.primary : colors.mutedForeground} />
-            <Text style={[styles.roleT, { color: role === "user" ? colors.primary : colors.foreground }]}>عميل</Text>
+            <Text style={[styles.roleT, { color: role === "user" ? colors.primary : colors.foreground }]}>{t("customer")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setRole("provider")}
             style={[styles.roleC, { borderColor: role === "provider" ? colors.accent : colors.border, backgroundColor: role === "provider" ? colors.accentLight : colors.card }]}>
             <MaterialCommunityIcons name="briefcase-check" size={20} color={role === "provider" ? colors.accent : colors.mutedForeground} />
-            <Text style={[styles.roleT, { color: role === "provider" ? colors.accent : colors.foreground }]}>مزود خدمة</Text>
+            <Text style={[styles.roleT, { color: role === "provider" ? colors.accent : colors.foreground }]}>{t("provider")}</Text>
           </TouchableOpacity>
         </View>
 
         {[
-          { i: "user", p: "الاسم الكامل", v: name, s: setName, k: "default" as const },
-          { i: "phone", p: "رقم الجوال", v: phone, s: setPhone, k: "phone-pad" as const },
-          { i: "mail", p: "البريد الإلكتروني", v: email, s: setEmail, k: "email-address" as const },
-          { i: "lock", p: "كلمة المرور (6+)", v: pwd, s: setPwd, k: "default" as const, sec: true },
+          { i: "user", p: t("full_name"), v: name, s: setName, k: "default" as const },
+          { i: "phone", p: t("phone"), v: phone, s: setPhone, k: "phone-pad" as const },
+          { i: "mail", p: t("email"), v: email, s: setEmail, k: "email-address" as const },
+          { i: "lock", p: t("password"), v: pwd, s: setPwd, k: "default" as const, sec: true },
         ].map((f) => (
           <View key={f.p} style={[styles.field, { backgroundColor: colors.card }]}>
             <Feather name={f.i as any} size={18} color={colors.mutedForeground} />
@@ -81,13 +83,13 @@ export default function SignupScreen() {
 
         <TouchableOpacity activeOpacity={0.9} onPress={onSubmit} disabled={busy} style={{ marginTop: 8 }}>
           <LinearGradient colors={[colors.primary, colors.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.btn}>
-            <Text style={styles.btnT}>{busy ? "جاري الإنشاء..." : "إنشاء حساب"}</Text>
+            <Text style={styles.btnT}>{busy ? t("loading") : t("signup")}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.replace("/login")} style={{ marginTop: 16, alignItems: "center" }}>
           <Text style={{ fontFamily: "Tajawal_600SemiBold", color: colors.foreground, fontSize: 14 }}>
-            لديك حساب؟ <Text style={{ color: colors.primary }}>تسجيل الدخول</Text>
+            {t("have_account")} <Text style={{ color: colors.primary }}>{t("signin_link")}</Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>

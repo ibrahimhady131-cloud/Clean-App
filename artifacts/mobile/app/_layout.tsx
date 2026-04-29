@@ -16,11 +16,20 @@ import { I18nManager, Text } from "react-native";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BookingProvider } from "@/store/booking";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeProvider } from "@/lib/theme";
+import { I18nProvider } from "@/lib/i18n";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-if (!I18nManager.isRTL) {
-  I18nManager.allowRTL(true);
-  I18nManager.forceRTL(true);
-}
+// Default to RTL on first launch (Arabic). Toggle handled by I18nProvider on lang change.
+AsyncStorage.getItem("app_lang").then((v) => {
+  const wantRTL = v !== "en";
+  if (I18nManager.isRTL !== wantRTL) {
+    try {
+      I18nManager.allowRTL(wantRTL);
+      I18nManager.forceRTL(wantRTL);
+    } catch {}
+  }
+});
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
@@ -90,11 +99,15 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
-              <AuthProvider>
-                <BookingProvider>
-                  <RootLayoutNav />
-                </BookingProvider>
-              </AuthProvider>
+              <ThemeProvider>
+                <I18nProvider>
+                  <AuthProvider>
+                    <BookingProvider>
+                      <RootLayoutNav />
+                    </BookingProvider>
+                  </AuthProvider>
+                </I18nProvider>
+              </ThemeProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>

@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase";
 import { getCurrentResolved, distanceKm, type ResolvedAddress } from "@/lib/location";
 import { registerForPush } from "@/lib/notifications";
 import { FALLBACK_CATEGORIES } from "@/lib/serviceImages";
+import { useI18n } from "@/lib/i18n";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ type Offer = { id: string; title_ar: string | null; desc_ar: string | null; disc
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { t } = useI18n();
   const { profile, session } = useAuth();
   const [loc, setLoc] = useState<ResolvedAddress | null>(null);
   const [locating, setLocating] = useState(false);
@@ -137,10 +139,10 @@ export default function HomeScreen() {
 
           <BlurView intensity={Platform.OS === "ios" ? 60 : 100} tint="light" style={styles.greetingBlur}>
             <Text style={styles.greetingText} numberOfLines={1}>
-              {firstName ? `مرحباً ${firstName} 👋` : "مرحباً بك 👋"}
+              {firstName ? `${t("hi_user")} ${firstName} 👋` : `${t("welcome")} 👋`}
             </Text>
             <Text style={styles.greetingSub} numberOfLines={1}>
-              {loc?.formatted ? loc.formatted : locating ? "جاري تحديد الموقع..." : "حدد موقعك الحالي"}
+              {loc?.formatted ? loc.formatted : locating ? t("locating") : t("set_location")}
             </Text>
           </BlurView>
 
@@ -155,7 +157,7 @@ export default function HomeScreen() {
         <TouchableOpacity activeOpacity={0.95} onPress={() => router.push("/search")} style={styles.searchWrap}>
           <BlurView intensity={Platform.OS === "ios" ? 60 : 100} tint="light" style={styles.searchBlur}>
             <Feather name="search" size={18} color="#64748B" />
-            <Text style={styles.searchPlaceholder}>ابحث عن خدمة أو فني...</Text>
+            <Text style={styles.searchPlaceholder}>{t("search_placeholder")}</Text>
             <View style={[styles.searchAction, { backgroundColor: colors.primary }]}>
               <Ionicons name="options-outline" size={16} color="#fff" />
             </View>
@@ -220,9 +222,9 @@ export default function HomeScreen() {
           {/* SERVICES */}
           <View style={styles.sectionHeader}>
             <TouchableOpacity onPress={() => router.push("/services")}>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>عرض الكل</Text>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>{t("see_all")}</Text>
             </TouchableOpacity>
-            <Text style={styles.sectionTitle}>الخدمات</Text>
+            <Text style={styles.sectionTitle}>{t("services")}</Text>
           </View>
 
           <View style={styles.servicesGrid}>
@@ -253,15 +255,15 @@ export default function HomeScreen() {
           {/* PROVIDERS */}
           <View style={styles.sectionHeader}>
             <TouchableOpacity onPress={() => router.push("/services")}>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>عرض الكل</Text>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>{t("see_all")}</Text>
             </TouchableOpacity>
-            <Text style={styles.sectionTitle}>أقرب الفنيين</Text>
+            <Text style={styles.sectionTitle}>{t("nearby_pros")}</Text>
           </View>
 
           {nearbyProviders.length === 0 ? (
             <View style={styles.emptyBox}>
               <MaterialCommunityIcons name="account-search-outline" size={42} color="#94A3B8" />
-              <Text style={styles.emptyText}>لا يوجد فنيين متاحين قريبين منك حالياً</Text>
+              <Text style={styles.emptyText}>{t("no_pros")}</Text>
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}>
@@ -287,7 +289,7 @@ export default function HomeScreen() {
                     </View>
                     {!!p.hourly_rate && (
                       <View style={styles.provPrice}>
-                        <Text style={styles.provPriceText}>{Number(p.hourly_rate)} ر.س/ساعة</Text>
+                        <Text style={styles.provPriceText}>{Number(p.hourly_rate)} {t("per_hour")}</Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -300,8 +302,8 @@ export default function HomeScreen() {
           <TouchableOpacity activeOpacity={0.92} style={styles.botWrap} onPress={() => router.push("/help")}>
             <LinearGradient colors={["#7C3AED", "#4F46E5"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.botCard}>
               <View style={styles.botContent}>
-                <Text style={styles.botTitle}>المساعد الذكي ✨</Text>
-                <Text style={styles.botSub}>اسأل عن أي خدمة وسنساعدك في اختيار الأنسب</Text>
+                <Text style={styles.botTitle}>{t("ai_assistant")}</Text>
+                <Text style={styles.botSub}>{t("ai_assistant_sub")}</Text>
               </View>
               <View style={styles.botIcon}>
                 <MaterialCommunityIcons name="robot-happy" size={30} color="#FFF" />

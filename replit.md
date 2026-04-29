@@ -14,6 +14,12 @@ The "Start application" workflow runs `bash scripts/start-all.sh`, which kills a
 
 The artifact-specific workflows (artifacts/mobile: expo, artifacts/admin: web, artifacts/api-server) will show "failed" while Start application is running because they would bind to the same ports — that is expected. Use them only if you stop Start application and want to run a single service.
 
+## Theme + i18n + maps
+
+- **Theme system**: `lib/theme.tsx` provides a `ThemeProvider` with `light` / `dark` / `system` modes, persisted in AsyncStorage. `hooks/useColors` reads from this provider. Both palettes already exist in `constants/colors.ts`. The toggle lives in **Settings → Appearance**.
+- **i18n system**: `lib/i18n.tsx` provides `I18nProvider`, `useI18n()` and `useT()` for the `t(key)` function. Languages are `ar` (default) and `en`, persisted in AsyncStorage. Switching language calls `I18nManager.forceRTL(...)` and triggers `expo-updates.reloadAsync()` (or web reload) so layout direction flips correctly. Toggle lives in **Settings → Language**. Translations cover the most-visible screens: onboarding, login, signup, home, services, profile, settings, address-form. Other screens fall back to Arabic until more keys are added to the dictionary in `lib/i18n.tsx`.
+- **Maps**: `components/AppMap.tsx` (web) renders real OpenStreetMap tiles with custom markers and polyline overlay. `components/AppMap.native.tsx` uses `react-native-maps`. They're used identically on home, tracking, provider home, provider booking-details, and address-form. Real GPS lookup + reverse geocoding lives in `lib/location.ts` (`getCurrentResolved` uses `expo-location.reverseGeocodeAsync` on native, Nominatim on web). Saved addresses store real `lat`/`lng`/`district`/`region` from the geocoder.
+
 ## Routing notes
 
 - `app/index.tsx` is a router-only screen: it routes to `/(tabs)/home` for users/guests and `/(provider)/home` for providers/admins.

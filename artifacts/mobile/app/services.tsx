@@ -11,6 +11,7 @@ import FloatingTabBar from "@/components/FloatingTabBar";
 import { useBooking } from "@/store/booking";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import {
   getServiceImage,
   FALLBACK_CATEGORIES,
@@ -32,6 +33,7 @@ const CAT_ICON_MAP: Record<string, string> = {
 export default function ServicesScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { t } = useI18n();
   const booking = useBooking();
   const { session } = useAuth();
   const params = useLocalSearchParams<{ cat?: string }>();
@@ -100,8 +102,8 @@ export default function ServicesScreen() {
           <Feather name="headphones" size={18} color={colors.foreground} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>خدماتنا</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>اختر الخدمة التي تناسب احتياجك</Text>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>{t("our_services")}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>{t("pick_service")}</Text>
         </View>
         <TouchableOpacity style={[styles.iconCircle, { backgroundColor: colors.card }]} onPress={() => router.back()}>
           <Feather name="chevron-right" size={22} color={colors.foreground} />
@@ -155,7 +157,7 @@ export default function ServicesScreen() {
                         <Feather name="arrow-left" size={14} color="#FFF" />
                       </View>
                       <Text style={[styles.priceText, { color: colors.foreground }]}>
-                        ابتداءً من <Text style={{ color: colors.primary, fontFamily: "Tajawal_700Bold" }}>{Number(service.base_price)}</Text> ر.س
+                        {t("starts_from")} <Text style={{ color: colors.primary, fontFamily: "Tajawal_700Bold" }}>{Number(service.base_price)}</Text> {t("sar")}
                       </Text>
                     </View>
                   </View>
@@ -164,7 +166,7 @@ export default function ServicesScreen() {
             })}
             {filtered.length === 0 && (
               <View style={{ width: "100%", alignItems: "center", padding: 40 }}>
-                <Text style={{ fontFamily: "Tajawal_500Medium", color: colors.mutedForeground }}>لا توجد خدمات في هذا التصنيف</Text>
+                <Text style={{ fontFamily: "Tajawal_500Medium", color: colors.mutedForeground }}>{t("no_services_in_cat")}</Text>
               </View>
             )}
           </View>

@@ -6,24 +6,26 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { t } = useI18n();
   const { signIn, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [busy, setBusy] = useState(false);
 
   const onSubmit = async () => {
-    if (!email || !pwd) return Alert.alert("تنبيه", "أدخل البريد وكلمة المرور");
+    if (!email || !pwd) return Alert.alert(t("error"), t("enter_credentials"));
     setBusy(true);
 
     const res = await signIn(email.trim(), pwd);
     setBusy(false);
 
     if (res.error) {
-      return Alert.alert("خطأ في تسجيل الدخول", res.error);
+      return Alert.alert(t("signin_error"), res.error);
     }
 
     const role = res.role || "user";
@@ -49,14 +51,14 @@ export default function LoginScreen() {
         <View style={[styles.logo, { backgroundColor: colors.primary }]}>
           <MaterialCommunityIcons name="broom" size={32} color="#FFF" />
         </View>
-        <Text style={[styles.title, { color: colors.foreground }]}>أهلاً بعودتك</Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]}>سجّل دخولك للمتابعة</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t("login_title")}</Text>
+        <Text style={[styles.sub, { color: colors.mutedForeground }]}>{t("login_sub")}</Text>
 
         <View style={[styles.field, { backgroundColor: colors.card }]}>
           <Feather name="mail" size={18} color={colors.mutedForeground} />
           <TextInput
             style={[styles.input, { color: colors.foreground }]}
-            placeholder="البريد الإلكتروني"
+            placeholder={t("email")}
             placeholderTextColor={colors.mutedForeground}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -70,7 +72,7 @@ export default function LoginScreen() {
           <Feather name="lock" size={18} color={colors.mutedForeground} />
           <TextInput
             style={[styles.input, { color: colors.foreground }]}
-            placeholder="كلمة المرور"
+            placeholder={t("password")}
             placeholderTextColor={colors.mutedForeground}
             secureTextEntry
             value={pwd}
@@ -81,19 +83,19 @@ export default function LoginScreen() {
 
         <TouchableOpacity activeOpacity={0.9} onPress={onSubmit} disabled={busy} style={{ marginTop: 8 }}>
           <LinearGradient colors={[colors.primary, colors.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.btn}>
-            <Text style={styles.btnT}>{busy ? "جاري الدخول..." : "تسجيل الدخول"}</Text>
+            <Text style={styles.btnT}>{busy ? t("loading") : t("signin")}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/signup")} style={{ marginTop: 16, alignItems: "center" }}>
           <Text style={{ fontFamily: "Tajawal_600SemiBold", color: colors.foreground, fontSize: 14 }}>
-            ليس لديك حساب؟ <Text style={{ color: colors.primary }}>إنشاء حساب جديد</Text>
+            {t("no_account")} <Text style={{ color: colors.primary }}>{t("signup_link")}</Text>
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={browseAsGuest} style={{ marginTop: 24, alignItems: "center" }}>
           <Text style={{ fontFamily: "Tajawal_500Medium", color: colors.mutedForeground, fontSize: 13 }}>
-            تصفح كزائر
+            {t("browse_as_guest")}
           </Text>
         </TouchableOpacity>
       </ScrollView>

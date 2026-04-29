@@ -7,43 +7,30 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useI18n } from "@/lib/i18n";
 
 const { width } = Dimensions.get("window");
 
-// Modern, calm, realistic backgrounds reflecting the brand:
-// 1) Professional cleaning, 2) Easy & fast booking, 3) Trust & comfort
-const ONBOARDING_DATA = [
-  {
-    id: "1",
-    smallTitle: "تنظيف احترافي",
-    largeTitle: "لمنزلك",
-    subtitle: "خدمات تنظيف احترافية على يد مختصين مدربين بأعلى معايير الجودة",
-    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1200&q=80",
-    icon: "auto-fix",
-  },
-  {
-    id: "2",
-    smallTitle: "احجز بسهولة",
-    largeTitle: "في أي وقت",
-    subtitle: "احجز خدمتك خلال دقائق بسيطة واختر الوقت المناسب ليصلك عامل النظافة",
-    image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=80",
-    icon: "calendar-check",
-  },
-  {
-    id: "3",
-    smallTitle: "راحة بالك",
-    largeTitle: "هي أولويتنا",
-    subtitle: "استمتع بمساحة نظيفة ومنظمة ونحن نهتم بالتفاصيل لتعكس هويتك",
-    image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80",
-    icon: "shield-check",
-  },
+const SLIDE_KEYS = [
+  { id: "1", small: "onb1_small", large: "onb1_large", sub: "onb1_sub", image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1200&q=80", icon: "auto-fix" },
+  { id: "2", small: "onb2_small", large: "onb2_large", sub: "onb2_sub", image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1200&q=80", icon: "calendar-check" },
+  { id: "3", small: "onb3_small", large: "onb3_large", sub: "onb3_sub", image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80", icon: "shield-check" },
 ];
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { t } = useI18n();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const ONBOARDING_DATA = SLIDE_KEYS.map((s) => ({
+    id: s.id,
+    smallTitle: t(s.small),
+    largeTitle: t(s.large),
+    subtitle: t(s.sub),
+    image: s.image,
+    icon: s.icon,
+  }));
 
   const handleScroll = (e: any) => {
     setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / width));
@@ -65,9 +52,9 @@ export default function OnboardingScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-        <TouchableOpacity onPress={handleSkip}><Text style={[styles.skipText, { color: colors.primary }]}>تخطي</Text></TouchableOpacity>
+        <TouchableOpacity onPress={handleSkip}><Text style={[styles.skipText, { color: colors.primary }]}>{t("skip")}</Text></TouchableOpacity>
         <View style={styles.brandContainer}>
-          <Text style={[styles.brandText, { color: colors.foreground }]}>نظافة</Text>
+          <Text style={[styles.brandText, { color: colors.foreground }]}>{t("app_name")}</Text>
           <View style={[styles.homeIconContainer, { backgroundColor: colors.primary }]}>
             <Feather name="home" size={16} color="#FFFFFF" />
           </View>
@@ -108,7 +95,7 @@ export default function OnboardingScreen() {
               <View style={styles.footer}>
                 <TouchableOpacity onPress={handleNext} activeOpacity={0.9} style={{ flex: 1 }}>
                   <LinearGradient colors={[colors.primary, colors.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.nextBtn}>
-                    <Text style={styles.nextBtnText}>{activeIndex === ONBOARDING_DATA.length - 1 ? "ابدأ الآن" : "التالي"}</Text>
+                    <Text style={styles.nextBtnText}>{activeIndex === ONBOARDING_DATA.length - 1 ? t("start_now") : t("next")}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
