@@ -32,9 +32,9 @@ export default function LoginScreen() {
       const role = res.role || "user";
       console.log("[v0] Login successful with role:", role);
       
-      // Redirect based on role
+      // Redirect based on role — use distinct paths to avoid /home collision on native
       if (role === "provider" || role === "admin") {
-        router.replace("/(provider)/home" as any);
+        router.replace("/(provider)/dashboard" as any);
       } else {
         router.replace("/(tabs)/home" as any);
       }

@@ -4,6 +4,7 @@ import {
   Tajawal_700Bold,
 } from "@expo-google-fonts/tajawal";
 import { useFonts } from "expo-font";
+import { Feather, MaterialCommunityIcons, Ionicons, MaterialIcons, FontAwesome, FontAwesome5, AntDesign, Entypo } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -84,6 +85,15 @@ export default function RootLayout() {
     Tajawal_500Medium,
     Tajawal_700Bold,
     Tajawal_600SemiBold: Tajawal_500Medium,
+    // Explicitly load icon fonts so Expo Go on real devices renders glyphs (not squares)
+    ...Feather.font,
+    ...MaterialCommunityIcons.font,
+    ...Ionicons.font,
+    ...MaterialIcons.font,
+    ...FontAwesome.font,
+    ...FontAwesome5.font,
+    ...AntDesign.font,
+    ...Entypo.font,
   });
 
   useEffect(() => {

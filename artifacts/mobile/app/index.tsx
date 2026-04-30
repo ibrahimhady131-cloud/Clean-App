@@ -42,7 +42,7 @@ export default function Index() {
   if (session && profile) {
     const role = profile.role;
     if (role === "provider" || role === "admin") {
-      return <Redirect href={"/(provider)/home" as any} />;
+      return <Redirect href={"/(provider)/dashboard" as any} />;
     }
     return <Redirect href={"/(tabs)/home" as any} />;
   }

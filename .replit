@@ -20,7 +20,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash scripts/start-all.sh"
+args = "echo '[start-all] Per-artifact workflows manage api/admin/expo. This is a no-op orchestrator.' && sleep infinity"
 
 [[workflows.workflow]]
 name = "artifacts/mockup-sandbox: Component Preview Server"
