@@ -88,14 +88,21 @@ export default function HomeScreen() {
   }, [session]);
 
   // T021 — Realtime subscription: refetch nearby providers whenever any provider row updates.
+  // Use a unique topic per mount so a lingering channel from a previous mount (e.g. when the tab
+  // is offscreened and reconnected by React) cannot collide and cause `.on()` to be called on an
+  // already-subscribed channel ("cannot add postgres_changes callbacks after subscribe()").
   useEffect(() => {
-    const ch = supabase
-      .channel("home-providers-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "providers" }, () => {
-        loadProviders();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let cancelled = false;
+    const topic = `home-providers-live-${Math.random().toString(36).slice(2, 10)}`;
+    const ch = supabase.channel(topic);
+    ch.on("postgres_changes", { event: "*", schema: "public", table: "providers" }, () => {
+      if (!cancelled) loadProviders();
+    });
+    ch.subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
   }, []);
 
   const requestLocation = async () => {
