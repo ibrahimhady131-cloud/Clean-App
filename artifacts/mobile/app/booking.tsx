@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -8,6 +8,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import { useBooking, DEFAULT_SERVICE } from "@/store/booking";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { distanceKm, getCurrentResolved, type ResolvedAddress } from "@/lib/location";
 
 const STEPS = [
   { id: 1, title: "الخدمة", status: "completed" },
@@ -16,27 +19,45 @@ const STEPS = [
   { id: 4, title: "تأكيد", status: "active" },
 ];
 
-const DATES = [
-  { day: "الثلاثاء", num: "21", month: "مايو" },
-  { day: "الأربعاء", num: "22", month: "مايو" },
-  { day: "الخميس", num: "23", month: "مايو" },
-  { day: "الجمعة", num: "24", month: "مايو" },
-  { day: "السبت", num: "25", month: "مايو" },
-];
+const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const AR_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+
+// Dynamically generate the next 7 days starting from today (real, not hardcoded)
+function buildUpcomingDays() {
+  const out: { day: string; num: string; month: string; iso: string }[] = [];
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    out.push({
+      day: i === 0 ? "اليوم" : i === 1 ? "غداً" : AR_DAYS[d.getDay()],
+      num: String(d.getDate()),
+      month: AR_MONTHS[d.getMonth()],
+      iso: d.toISOString(),
+    });
+  }
+  return out;
+}
 
 const TIMES = [
-  { label: "صباحاً", range: "08:00-10:00" },
-  { label: "صباحاً", range: "10:00-12:00" },
-  { label: "ظهراً", range: "12:00-02:00" },
-  { label: "عصراً", range: "04:00-06:00" },
-  { label: "مساء", range: "06:00-08:00" },
+  { label: "صباحاً", range: "08:00-10:00", h: 8 },
+  { label: "صباحاً", range: "10:00-12:00", h: 10 },
+  { label: "ظهراً", range: "12:00-14:00", h: 12 },
+  { label: "عصراً", range: "16:00-18:00", h: 16 },
+  { label: "مساء", range: "18:00-20:00", h: 18 },
 ];
 
-const CLEANERS = [
-  { id: "1", name: "أحمد حسين", rating: "4.9", exp: "5", image: require("@/assets/images/cleaner-fatima.png") },
-  { id: "2", name: "سارة علي", rating: "4.8", exp: "3", image: require("@/assets/images/cleaner-sara.png") },
-  { id: "3", name: "نورة محمد", rating: "4.7", exp: "4", image: require("@/assets/images/cleaner-noura.png") },
-];
+type Provider = {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  rating: number;
+  experience_years: number;
+  hourly_rate: number;
+  current_lat: number | null;
+  current_lng: number | null;
+  d_km: number | null;
+};
 
 const tap = () => {
   if (Platform.OS !== "web") Haptics.selectionAsync();
@@ -46,10 +67,58 @@ export default function BookingScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const booking = useBooking();
+  const { session } = useAuth();
 
+  const dates = useMemo(buildUpcomingDays, []);
   const service = booking.service ?? DEFAULT_SERVICE;
-  const selectedCleaner = CLEANERS.find((c) => c.id === booking.cleanerId) ?? CLEANERS[0];
-  const selectedDate = DATES[booking.dateIndex] ?? DATES[2];
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loadingProvs, setLoadingProvs] = useState(true);
+  const [bookingType, setBookingType] = useState<"instant" | "scheduled">("scheduled");
+
+  // Load real nearby providers from DB
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingProvs(true);
+      try {
+        const me: ResolvedAddress | null = await getCurrentResolved();
+        const { data } = await supabase
+          .from("providers")
+          .select("id, rating, experience_years, current_lat, current_lng, hourly_rate, available, profiles(full_name, avatar_url)")
+          .eq("status", "approved")
+          .eq("available", true)
+          .limit(15);
+        if (cancelled) return;
+        const mapped: Provider[] = (data ?? []).map((p: any) => {
+          const lat = p.current_lat;
+          const lng = p.current_lng;
+          const d = me && lat && lng ? distanceKm({ lat: me.lat, lng: me.lng }, { lat, lng }) : null;
+          return {
+            id: p.id,
+            full_name: p.profiles?.full_name || null,
+            avatar_url: p.profiles?.avatar_url || null,
+            rating: Number(p.rating || 0),
+            experience_years: Number(p.experience_years || 0),
+            hourly_rate: Number(p.hourly_rate || 0),
+            current_lat: lat,
+            current_lng: lng,
+            d_km: d,
+          };
+        });
+        // Sort by distance (nulls last)
+        mapped.sort((a, b) => (a.d_km ?? 999) - (b.d_km ?? 999));
+        setProviders(mapped);
+      } catch (e) {
+        console.log("[v0] booking providers load failed", (e as Error).message);
+      } finally {
+        if (!cancelled) setLoadingProvs(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const selectedProvider = providers.find((p) => p.id === booking.cleanerId) ?? providers[0] ?? null;
+  const selectedDate = dates[booking.dateIndex] ?? dates[0];
   const selectedTime = TIMES[booking.timeIndex] ?? TIMES[1];
 
   // Pricing derived from selected service
@@ -64,7 +133,6 @@ export default function BookingScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerTitleContainer}>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>إتمام الحجز</Text>
@@ -125,131 +193,159 @@ export default function BookingScreen() {
           ))}
         </View>
 
-        {/* Date Selection */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>اختر التاريخ</Text>
-          <Feather name="calendar" size={18} color={colors.foreground} />
+        {/* Booking type toggle (Instant vs Scheduled) */}
+        <View style={styles.typeToggleWrap}>
+          <TouchableOpacity
+            onPress={() => { tap(); setBookingType("instant"); }}
+            style={[styles.typeBtn, bookingType === "instant" && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="lightning-bolt" size={16} color={bookingType === "instant" ? "#FFF" : colors.primary} />
+            <Text style={[styles.typeT, { color: bookingType === "instant" ? "#FFF" : colors.foreground }]}>حجز فوري</Text>
+            <Text style={[styles.typeSub, { color: bookingType === "instant" ? "rgba(255,255,255,0.85)" : colors.mutedForeground }]}>أقرب فني الآن</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => { tap(); setBookingType("scheduled"); }}
+            style={[styles.typeBtn, bookingType === "scheduled" && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+            activeOpacity={0.85}
+          >
+            <Feather name="calendar" size={16} color={bookingType === "scheduled" ? "#FFF" : colors.primary} />
+            <Text style={[styles.typeT, { color: bookingType === "scheduled" ? "#FFF" : colors.foreground }]}>حجز مجدول</Text>
+            <Text style={[styles.typeSub, { color: bookingType === "scheduled" ? "rgba(255,255,255,0.85)" : colors.mutedForeground }]}>اختر موعداً</Text>
+          </TouchableOpacity>
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalScroll}
-        >
-          {DATES.map((date, index) => {
-            const selected = booking.dateIndex === index;
-            return (
-              <TouchableOpacity
-                key={index}
-                activeOpacity={0.85}
-                onPress={() => {
-                  tap();
-                  booking.setDateIndex(index);
-                }}
-                style={[
-                  styles.dateCard,
-                  {
-                    backgroundColor: selected ? colors.primary : colors.card,
-                    borderColor: selected ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.dateDay, { color: selected ? "#FFFFFF" : colors.mutedForeground }]}>
-                  {date.day}
-                </Text>
-                <Text style={[styles.dateNum, { color: selected ? "#FFFFFF" : colors.foreground }]}>
-                  {date.num}
-                </Text>
-                <Text style={[styles.dateMonth, { color: selected ? "#FFFFFF" : colors.mutedForeground }]}>
-                  {date.month}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
 
-        {/* Time Selection */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>اختر الوقت</Text>
-          <Feather name="clock" size={18} color={colors.foreground} />
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalScroll}
-        >
-          {TIMES.map((time, index) => {
-            const selected = booking.timeIndex === index;
-            return (
-              <TouchableOpacity
-                key={index}
-                activeOpacity={0.85}
-                onPress={() => {
-                  tap();
-                  booking.setTimeIndex(index);
-                }}
-                style={[
-                  styles.timeCard,
-                  {
-                    backgroundColor: selected ? colors.primary : colors.card,
-                    borderColor: selected ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.timeLabel, { color: selected ? "#FFFFFF" : colors.mutedForeground }]}>
-                  {time.label}
-                </Text>
-                <Text style={[styles.timeRange, { color: selected ? "#FFFFFF" : colors.foreground }]}>
-                  {time.range}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+        {bookingType === "scheduled" && (
+          <>
+            {/* Date Selection */}
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>اختر التاريخ</Text>
+              <Feather name="calendar" size={18} color={colors.foreground} />
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {dates.map((date, index) => {
+                const selected = booking.dateIndex === index;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    activeOpacity={0.85}
+                    onPress={() => { tap(); booking.setDateIndex(index); }}
+                    style={[
+                      styles.dateCard,
+                      {
+                        backgroundColor: selected ? colors.primary : colors.card,
+                        borderColor: selected ? colors.primary : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.dateDay, { color: selected ? "#FFFFFF" : colors.mutedForeground }]}>{date.day}</Text>
+                    <Text style={[styles.dateNum, { color: selected ? "#FFFFFF" : colors.foreground }]}>{date.num}</Text>
+                    <Text style={[styles.dateMonth, { color: selected ? "#FFFFFF" : colors.mutedForeground }]}>{date.month}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
-        {/* Cleaner Selection */}
+            {/* Time Selection */}
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>اختر الوقت</Text>
+              <Feather name="clock" size={18} color={colors.foreground} />
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {TIMES.map((time, index) => {
+                const selected = booking.timeIndex === index;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    activeOpacity={0.85}
+                    onPress={() => { tap(); booking.setTimeIndex(index); }}
+                    style={[
+                      styles.timeCard,
+                      {
+                        backgroundColor: selected ? colors.primary : colors.card,
+                        borderColor: selected ? colors.primary : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.timeLabel, { color: selected ? "#FFFFFF" : colors.mutedForeground }]}>{time.label}</Text>
+                    <Text style={[styles.timeRange, { color: selected ? "#FFFFFF" : colors.foreground }]}>{time.range}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
+
+        {/* Provider Selection — REAL from DB */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>اختر عامل النظافة</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+            {bookingType === "instant" ? "أقرب فني متاح" : "اختر الفني"}
+          </Text>
           <Feather name="user" size={18} color={colors.foreground} />
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalScroll}
-        >
-          {CLEANERS.map((item) => {
-            const selected = booking.cleanerId === item.id;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.85}
-                onPress={() => {
-                  tap();
-                  booking.setCleanerId(item.id);
-                }}
-                style={[
-                  styles.cleanerCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: selected ? colors.primary : "transparent",
-                    borderWidth: selected ? 2 : 0,
-                  },
-                ]}
-              >
-                {selected && (
-                  <View style={[styles.cleanerCheck, { backgroundColor: colors.primary }]}>
-                    <Feather name="check" size={12} color="#FFFFFF" />
+
+        {loadingProvs ? (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+        ) : providers.length === 0 ? (
+          <View style={[styles.emptyProv, { backgroundColor: colors.card }]}>
+            <MaterialCommunityIcons name="account-search" size={40} color={colors.mutedForeground} />
+            <Text style={[styles.emptyProvT, { color: colors.foreground }]}>لا يوجد فنيون متاحون الآن</Text>
+            <Text style={[styles.emptyProvS, { color: colors.mutedForeground }]}>سيتم تخصيص أقرب فني فور قبول الطلب</Text>
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+            {providers.map((p) => {
+              const selected = booking.cleanerId === p.id;
+              const initials = (p.full_name || "؟").trim().split(" ").map((s) => s[0]).slice(0, 2).join("");
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  activeOpacity={0.85}
+                  onPress={() => { tap(); booking.setCleanerId(p.id); }}
+                  style={[
+                    styles.cleanerCard,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: selected ? colors.primary : "transparent",
+                      borderWidth: selected ? 2 : 0,
+                    },
+                  ]}
+                >
+                  {selected && (
+                    <View style={[styles.cleanerCheck, { backgroundColor: colors.primary }]}>
+                      <Feather name="check" size={12} color="#FFFFFF" />
+                    </View>
+                  )}
+                  {p.avatar_url ? (
+                    <Image source={{ uri: p.avatar_url }} style={styles.cleanerAvatar} />
+                  ) : (
+                    <View style={[styles.cleanerAvatar, { backgroundColor: colors.primaryLight, alignItems: "center", justifyContent: "center" }]}>
+                      <Text style={{ fontFamily: "Tajawal_700Bold", color: colors.primary, fontSize: 16 }}>{initials}</Text>
+                    </View>
+                  )}
+                  <Text style={[styles.cleanerName, { color: colors.foreground }]} numberOfLines={1}>{p.full_name || "فني"}</Text>
+                  <View style={styles.ratingRow}>
+                    <Text style={[styles.ratingText, { color: colors.foreground }]}>{p.rating.toFixed(1)}</Text>
+                    <MaterialCommunityIcons name="star" size={14} color={colors.warning} />
                   </View>
-                )}
-                <Image source={item.image} style={styles.cleanerAvatar} />
-                <Text style={[styles.cleanerName, { color: colors.foreground }]}>{item.name}</Text>
-                <View style={styles.ratingRow}>
-                  <Text style={[styles.ratingText, { color: colors.foreground }]}>{item.rating}</Text>
-                  <MaterialCommunityIcons name="star" size={14} color={colors.warning} />
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+                  {p.d_km != null && (
+                    <Text style={{ fontFamily: "Tajawal_500Medium", fontSize: 10, color: colors.mutedForeground, marginTop: 2 }}>
+                      {p.d_km < 1 ? `${Math.round(p.d_km * 1000)} م` : `${p.d_km.toFixed(1)} كم`}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
 
         {/* Order Summary */}
         <View style={[styles.summaryCard, { backgroundColor: colors.card }]}>
@@ -258,19 +354,31 @@ export default function BookingScreen() {
             <Text style={[styles.summaryValue, { color: colors.foreground }]}>{service.title}</Text>
             <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>الخدمة</Text>
           </View>
+          {bookingType === "scheduled" && selectedDate && (
+            <>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryValue, { color: colors.foreground }]}>
+                  {selectedDate.day}، {selectedDate.num} {selectedDate.month}
+                </Text>
+                <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>التاريخ</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryValue, { color: colors.foreground }]}>{selectedTime.range}</Text>
+                <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>الوقت</Text>
+              </View>
+            </>
+          )}
+          {bookingType === "instant" && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryValue, { color: colors.primary }]}>الآن (خلال دقائق)</Text>
+              <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>الموعد</Text>
+            </View>
+          )}
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryValue, { color: colors.foreground }]}>
-              {selectedDate.day}، {selectedDate.num} {selectedDate.month}
+              {selectedProvider?.full_name || "أقرب فني متاح"}
             </Text>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>التاريخ</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>{selectedTime.range}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>الوقت</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>{selectedCleaner.name}</Text>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>عامل النظافة</Text>
+            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>الفني</Text>
           </View>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -304,7 +412,9 @@ export default function BookingScreen() {
         >
           <Feather name="chevron-left" size={20} color={colors.mutedForeground} />
           <View style={styles.paymentInfo}>
-            <Text style={[styles.paymentText, { color: colors.foreground }]}>visa **** 4242</Text>
+            <Text style={[styles.paymentText, { color: colors.foreground }]}>
+              {booking.paymentMethodId === "3" ? "نقدي عند الاستلام" : "بطاقة ائتمانية"}
+            </Text>
             <MaterialCommunityIcons name="credit-card" size={20} color={colors.accent} />
           </View>
           <Text style={[styles.paymentLabel, { color: colors.mutedForeground }]}>طريقة الدفع</Text>
@@ -317,6 +427,14 @@ export default function BookingScreen() {
           activeOpacity={0.9}
           onPress={() => {
             if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            // Persist scheduled date so payment screen creates the booking with the correct time
+            if (bookingType === "scheduled" && selectedDate) {
+              const d = new Date(selectedDate.iso);
+              d.setHours(selectedTime.h, 0, 0, 0);
+              (booking as any).setScheduledIso?.(d.toISOString());
+            } else {
+              (booking as any).setScheduledIso?.(new Date().toISOString());
+            }
             router.push("/payment");
           }}
         >
@@ -382,6 +500,10 @@ const styles = StyleSheet.create({
   stepNumber: { color: "#FFFFFF", fontFamily: "Tajawal_700Bold", fontSize: 12 },
   stepTitle: { fontFamily: "Tajawal_600SemiBold", fontSize: 10 },
   stepLine: { height: 2, flex: 1, marginTop: -16 },
+  typeToggleWrap: { flexDirection: "row-reverse", paddingHorizontal: 16, gap: 10, marginBottom: 18 },
+  typeBtn: { flex: 1, padding: 12, borderRadius: 16, alignItems: "center", borderWidth: 1, borderColor: "#E2E8F0", gap: 4 },
+  typeT: { fontFamily: "Tajawal_700Bold", fontSize: 13, marginTop: 4 },
+  typeSub: { fontFamily: "Tajawal_400Regular", fontSize: 10 },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -400,9 +522,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
   },
-  dateDay: { fontFamily: "Tajawal_500Medium", fontSize: 12 },
+  dateDay: { fontFamily: "Tajawal_500Medium", fontSize: 11 },
   dateNum: { fontFamily: "Tajawal_700Bold", fontSize: 18 },
-  dateMonth: { fontFamily: "Tajawal_400Regular", fontSize: 12 },
+  dateMonth: { fontFamily: "Tajawal_400Regular", fontSize: 11 },
   timeCard: {
     width: 120,
     height: 60,
@@ -414,7 +536,7 @@ const styles = StyleSheet.create({
   timeLabel: { fontFamily: "Tajawal_500Medium", fontSize: 11 },
   timeRange: { fontFamily: "Tajawal_700Bold", fontSize: 13 },
   cleanerCard: {
-    width: 110,
+    width: 120,
     padding: 12,
     borderRadius: 20,
     alignItems: "center",
@@ -440,6 +562,9 @@ const styles = StyleSheet.create({
   cleanerName: { fontFamily: "Tajawal_600SemiBold", fontSize: 12, marginBottom: 4, textAlign: "center" },
   ratingRow: { flexDirection: "row-reverse", alignItems: "center", gap: 2 },
   ratingText: { fontFamily: "Tajawal_700Bold", fontSize: 11 },
+  emptyProv: { marginHorizontal: 16, padding: 24, borderRadius: 18, alignItems: "center", marginBottom: 18, gap: 6 },
+  emptyProvT: { fontFamily: "Tajawal_700Bold", fontSize: 13, marginTop: 6 },
+  emptyProvS: { fontFamily: "Tajawal_500Medium", fontSize: 11, textAlign: "center" },
   summaryCard: {
     marginHorizontal: 24,
     borderRadius: 24,

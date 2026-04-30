@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -142,3 +142,6 @@ externalPort = 3001
 [userenv.shared]
 EXPO_PUBLIC_SUPABASE_URL = "https://ppokdtzlisaxsrmtwlrb.supabase.co"
 EXPO_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_4aV1hEm-Ow4oy6AAgUR7rg_miOdFXHa"
+
+[nix]
+channel = "stable-25_05"

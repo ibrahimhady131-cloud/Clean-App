@@ -373,3 +373,53 @@ drop policy if exists "admin all support" on support_tickets;
 create policy "admin all support" on support_tickets for all using (public.is_admin()) with check (public.is_admin());
 drop policy if exists "user own support" on support_tickets;
 create policy "user own support" on support_tickets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- T023: Auto-insert notifications on booking status changes.
+-- Sends a row to notifications for both the user and the assigned provider.
+-- ─────────────────────────────────────────────────────────────────────────────
+create or replace function public.fn_booking_status_notify()
+returns trigger language plpgsql security definer as $$
+declare
+  v_title text;
+  v_body  text;
+  v_type  text;
+begin
+  if (tg_op = 'INSERT') then
+    v_title := 'تم إنشاء طلب جديد';
+    v_body  := 'رقم الطلب: ' || left(new.id::text, 8);
+    v_type  := 'booking_created';
+  elsif (tg_op = 'UPDATE' and new.status is distinct from old.status) then
+    v_type := 'booking_status';
+    case new.status
+      when 'accepted'  then v_title := 'تم قبول طلبك ✅';      v_body := 'الفنّي قَبِل طلبك وسيتواصل معك قريباً.';
+      when 'on_way'    then v_title := 'الفنّي في الطريق 🚗';   v_body := 'يمكنك متابعة موقع الفنّي مباشرة من شاشة التتبع.';
+      when 'started'   then v_title := 'بدأ تنفيذ الخدمة 🧹';   v_body := 'الفنّي بدأ العمل على طلبك.';
+      when 'completed' then v_title := 'اكتملت الخدمة 🎉';      v_body := 'يسعدنا معرفة رأيك — اضغط لتقييم الفنّي.';
+      when 'cancelled' then v_title := 'تم إلغاء الطلب';        v_body := 'إذا كان هذا غير صحيح يمكنك التواصل مع الدعم.';
+      else                  v_title := 'تحديث على الطلب';        v_body := 'الحالة الجديدة: ' || new.status;
+    end case;
+  else
+    return new;
+  end if;
+
+  -- Notify customer
+  if new.user_id is not null then
+    insert into notifications (user_id, title, body, type, data)
+    values (new.user_id, v_title, v_body, v_type, jsonb_build_object('booking_id', new.id, 'status', new.status));
+  end if;
+
+  -- Notify provider (if assigned)
+  if new.provider_id is not null and (tg_op = 'UPDATE' or new.provider_id is not null) then
+    insert into notifications (user_id, title, body, type, data)
+    values (new.provider_id, v_title, v_body, v_type, jsonb_build_object('booking_id', new.id, 'status', new.status));
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_booking_status_notify on bookings;
+create trigger trg_booking_status_notify
+after insert or update of status on bookings
+for each row execute function public.fn_booking_status_notify();

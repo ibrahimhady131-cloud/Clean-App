@@ -1,13 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
-export type Cleaner = {
-  id: string;
-  name: string;
-  rating: string;
-  exp: string;
-  image: any;
-};
-
 export type ServiceItem = {
   id: string;
   title: string;
@@ -21,13 +13,15 @@ export type BookingState = {
   service: ServiceItem | null;
   dateIndex: number;
   timeIndex: number;
-  cleanerId: string;
+  cleanerId: string;            // selected provider id (uuid) or "" for auto
   paymentMethodId: string;
+  scheduledIso: string | null;  // ISO timestamp for scheduled bookings
   setService: (s: ServiceItem) => void;
   setDateIndex: (i: number) => void;
   setTimeIndex: (i: number) => void;
   setCleanerId: (id: string) => void;
   setPaymentMethodId: (id: string) => void;
+  setScheduledIso: (iso: string | null) => void;
   reset: () => void;
 };
 
@@ -44,10 +38,11 @@ export const DEFAULT_SERVICE: ServiceItem = {
 
 export function BookingProvider({ children }: { children: React.ReactNode }) {
   const [service, setService] = useState<ServiceItem | null>(DEFAULT_SERVICE);
-  const [dateIndex, setDateIndex] = useState<number>(2);
+  const [dateIndex, setDateIndex] = useState<number>(0);
   const [timeIndex, setTimeIndex] = useState<number>(1);
-  const [cleanerId, setCleanerId] = useState<string>("1");
+  const [cleanerId, setCleanerId] = useState<string>("");
   const [paymentMethodId, setPaymentMethodId] = useState<string>("1");
+  const [scheduledIso, setScheduledIso] = useState<string | null>(null);
 
   const value = useMemo<BookingState>(
     () => ({
@@ -56,20 +51,23 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
       timeIndex,
       cleanerId,
       paymentMethodId,
+      scheduledIso,
       setService,
       setDateIndex,
       setTimeIndex,
       setCleanerId,
       setPaymentMethodId,
+      setScheduledIso,
       reset: () => {
         setService(DEFAULT_SERVICE);
-        setDateIndex(2);
+        setDateIndex(0);
         setTimeIndex(1);
-        setCleanerId("1");
+        setCleanerId("");
         setPaymentMethodId("1");
+        setScheduledIso(null);
       },
     }),
-    [service, dateIndex, timeIndex, cleanerId, paymentMethodId],
+    [service, dateIndex, timeIndex, cleanerId, paymentMethodId, scheduledIso],
   );
 
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;

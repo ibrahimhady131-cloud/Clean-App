@@ -98,3 +98,31 @@ The artifact-specific workflows (artifacts/mobile: expo, artifacts/admin: web, a
 - `pnpm --filter @workspace/admin run dev` — run Admin panel
 
 RTL is forced globally in `app/_layout.tsx` via `I18nManager.forceRTL(true)`.
+
+## 2026-04-30 — Comprehensive overhaul (v2)
+
+Massive issue-list pass. All 35 tasks (T001–T090) addressed.
+
+### Files of note
+- `lib/serviceIcons.ts` — semantic icon + color map for service titles (used by home, services, chat).
+- `app/(tabs)/chat.tsx` — fully rewritten smart assistant: voice input (web SpeechRecognition), service grid, real DB providers/services, rule-based KB for orders/refunds/disputes/invoices, autofill address+phone with confirm cards, end-to-end booking flow that inserts a real `bookings` row and routes to `/tracking`.
+- `app/(tabs)/home.tsx` — services moved above offers, modern semantic icons, soft coupon-style offer cards, zoomed-in map (delta 0.012), Realtime subscription on `providers`, AI bot card routes to `/(tabs)/chat`.
+- `app/(provider)/dashboard.tsx` — 5-second location heartbeat while online (writes `current_lat`/`current_lng` to providers).
+- `app/notifications.tsx` — uses real `notifications` table with the `read` boolean (NOT `read_at`).
+- `app/payment.tsx` — large wallet glyph card + inline real-text logos (Visa/Mada/Apple Pay/STC Pay/Tamara/Cash); persists `bookings.scheduled_at` + `provider_id`.
+- `app/booking.tsx` — real DB providers sorted by distance + dynamic 7-day picker + instant/scheduled toggle.
+- `db/schema.sql` — appended trigger `trg_booking_status_notify` that auto-inserts a notification row for both customer and provider on every booking insert / status change. **Run on Supabase manually.**
+- `BUILD_APK.md` — full instructions for EAS Build (Replit cannot build APK directly; needs the Expo cloud).
+
+### Realtime architecture
+- **Provider** (when "online") writes its GPS to `providers` every 5s.
+- **Customer home** subscribes to `postgres_changes` on `providers` → live nearby pins.
+- **Tracking page** subscribes to `bookings` (status) + `providers` (location) for the assigned provider.
+- **Notifications** subscribe to `notifications` inserts; trigger fans out booking status changes automatically.
+
+### Schema gaps fixed in admin
+- `Dashboard.tsx` was selecting `bookings.total_price` but the column is `bookings.total` — fixed.
+- Mobile chat.tsx was selecting `services.active`/`services.popularity` (don't exist); switched to `is_active` + `sort` to match schema.
+
+### Free-tier note
+- Replit free tier blocks third-party connectors; this build relies only on Supabase (already wired) and Expo OTA. APK builds run on Expo's EAS cloud — see `artifacts/mobile/BUILD_APK.md`.

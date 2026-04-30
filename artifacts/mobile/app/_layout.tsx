@@ -39,8 +39,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
   }
 })();
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 const queryClient = new QueryClient();
+
+// Hard safety net: if anything stalls (font fetch, native module),
+// hide the splash after 5s no matter what so the user never sees a frozen screen.
+setTimeout(() => {
+  SplashScreen.hideAsync().catch(() => {});
+}, 5000);
 
 function RootLayoutNav() {
   return (
@@ -96,19 +102,27 @@ export default function RootLayout() {
     ...Entypo.font,
   });
 
+  // Force-render after 3.5s even if fonts are still pending so the app doesn't hang
+  // on Expo Go. Icon glyphs may briefly show as boxes but will swap in once loaded.
+  const [forceReady, setForceReady] = React.useState(false);
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    const t = setTimeout(() => setForceReady(true), 3500);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError || forceReady) {
       const TextAny = Text as any;
       TextAny.defaultProps = TextAny.defaultProps || {};
       TextAny.defaultProps.style = [
         { fontFamily: "Tajawal_400Regular", writingDirection: "rtl" },
         TextAny.defaultProps.style,
       ];
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, forceReady]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!fontsLoaded && !fontError && !forceReady) return null;
 
   return (
     <SafeAreaProvider>

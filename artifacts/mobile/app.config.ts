@@ -13,7 +13,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: "./assets/images/icon.png",
     scheme: "mobile",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
+    // newArchEnabled is OFF for Expo Go compatibility (turbomodules + new arch
+    // can hang/crash on Expo Go on real Android devices). Re-enable for prod
+    // builds via EAS if needed.
+    newArchEnabled: false,
     splash: {
       image: "./assets/images/icon.png",
       resizeMode: "contain",
@@ -65,7 +68,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ],
     experiments: {
       typedRoutes: true,
-      reactCompiler: true,
+      // reactCompiler off for Expo Go — it occasionally causes runtime hangs
+      // on the JS bundle on real Android devices.
+      reactCompiler: false,
     },
     extra: {
       ...(config.extra ?? {}),

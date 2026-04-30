@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, Platform, Image, ImageSourcePropType } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,17 +13,16 @@ import { getCurrentResolved, distanceKm, type ResolvedAddress } from "@/lib/loca
 import { registerForPush } from "@/lib/notifications";
 import { FALLBACK_CATEGORIES } from "@/lib/serviceImages";
 import { useI18n } from "@/lib/i18n";
+import { iconForService, colorForService } from "../../lib/serviceIcons";
 
-const SERVICE_CARD_DATA: Record<string, { image: ImageSourcePropType; bgColor: string }> = {
-  homes:     { image: require("@/assets/images/illustration-vacuum.png"), bgColor: "#D1FAE5" },
-  deep:      { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#DBEAFE" },
-  offices:   { image: require("@/assets/images/illustration-office.png"), bgColor: "#FEF3C7" },
-  furniture: { image: require("@/assets/images/illustration-armchair.png"), bgColor: "#FCE7F3" },
-  kitchens:  { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#FFF7ED" },
-  villas:    { image: require("@/assets/images/illustration-vacuum.png"), bgColor: "#EDE9FE" },
-  bathrooms: { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#ECFEFF" },
-  tanks:     { image: require("@/assets/images/illustration-bucket.png"), bgColor: "#E0F2FE" },
-};
+// Soft, coupon-style background colors for offer cards (T043).
+const OFFER_PALETTES: { bg: string; border: string; accent: string; text: string }[] = [
+  { bg: "#FEF3C7", border: "#FDE68A", accent: "#F59E0B", text: "#92400E" }, // amber
+  { bg: "#DBEAFE", border: "#BFDBFE", accent: "#3B82F6", text: "#1E40AF" }, // blue
+  { bg: "#FCE7F3", border: "#FBCFE8", accent: "#EC4899", text: "#9D174D" }, // pink
+  { bg: "#D1FAE5", border: "#A7F3D0", accent: "#10B981", text: "#065F46" }, // emerald
+  { bg: "#EDE9FE", border: "#DDD6FE", accent: "#7C3AED", text: "#5B21B6" }, // violet
+];
 
 const { height: SCREEN_H } = Dimensions.get("window");
 
@@ -51,26 +50,32 @@ export default function HomeScreen() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
 
+  const loadProviders = async () => {
+    try {
+      const { data } = await supabase
+        .from("providers")
+        .select("id, rating, experience_years, current_lat, current_lng, available, hourly_rate, profiles(full_name, avatar_url)")
+        .eq("status", "approved")
+        .limit(10);
+      if (data) setProviders(data as any);
+    } catch {}
+  };
+
   useEffect(() => {
     (async () => {
       try {
-        const [catsRes, provRes, offersRes] = await Promise.all([
+        const [catsRes, offersRes] = await Promise.all([
           supabase.from("service_categories").select("*").order("sort").limit(8),
-          supabase
-            .from("providers")
-            .select("id, rating, experience_years, current_lat, current_lng, available, hourly_rate, profiles(full_name, avatar_url)")
-            .eq("status", "approved")
-            .limit(10),
           supabase.from("offers").select("*").eq("active", true).limit(5),
         ]);
         const dbCats = (catsRes.data || []) as Cat[];
         // Fall back to static categories so the home page is never empty
         setCats(dbCats.length > 0 ? dbCats : (FALLBACK_CATEGORIES as any));
-        if (provRes.data) setProviders(provRes.data as any);
         if (offersRes.data) setOffers(offersRes.data as any);
       } catch {
         setCats(FALLBACK_CATEGORIES as any);
       }
+      await loadProviders();
       requestLocation();
       if (session?.user) {
         try {
@@ -81,6 +86,17 @@ export default function HomeScreen() {
       }
     })();
   }, [session]);
+
+  // T021 — Realtime subscription: refetch nearby providers whenever any provider row updates.
+  useEffect(() => {
+    const ch = supabase
+      .channel("home-providers-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "providers" }, () => {
+        loadProviders();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   const requestLocation = async () => {
     setLocating(true);
@@ -93,8 +109,8 @@ export default function HomeScreen() {
     () => ({
       latitude: loc?.lat ?? 24.7136,
       longitude: loc?.lng ?? 46.6753,
-      latitudeDelta: 0.025,
-      longitudeDelta: 0.025,
+      latitudeDelta: 0.012,
+      longitudeDelta: 0.012,
     }),
     [loc]
   );
@@ -199,44 +215,7 @@ export default function HomeScreen() {
         <View style={styles.sheet}>
           <View style={styles.sheetGrabber} />
 
-          {/* OFFERS */}
-          {offers.length > 0 && (
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
-              style={{ marginBottom: 18, marginTop: 4 }}
-            >
-              {offers.map((o, idx) => (
-                <TouchableOpacity key={o.id} activeOpacity={0.9} onPress={() => router.push("/(tabs)/offers")} style={styles.offerCard}>
-                  <LinearGradient
-                    colors={idx % 2 === 0 ? ["#16C47F", "#0EA968"] : ["#3B82F6", "#1E40AF"]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={styles.offerInner}
-                  >
-                    <View style={{ flex: 1, alignItems: "flex-end" }}>
-                      <View style={styles.offerBadge}>
-                        <Text style={styles.offerBadgeText}>عرض</Text>
-                      </View>
-                      <Text style={styles.offerTitle} numberOfLines={1}>{o.title_ar}</Text>
-                      <Text style={styles.offerSub} numberOfLines={2}>{o.desc_ar}</Text>
-                      {!!o.discount && (
-                        <View style={styles.discountChip}>
-                          <Text style={styles.discountText}>خصم {o.discount}%</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.offerIcon}>
-                      <Feather name="gift" size={28} color="#fff" />
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-
-          {/* SERVICES */}
+          {/* SERVICES (T042: moved above offers) */}
           <View style={styles.sectionHeader}>
             <TouchableOpacity onPress={() => router.push("/services")}>
               <Text style={[styles.seeAll, { color: colors.primary }]}>{t("see_all")}</Text>
@@ -251,7 +230,9 @@ export default function HomeScreen() {
             style={{ marginBottom: 22 }}
           >
             {cats.slice(0, 8).map((cat) => {
-              const cardData = SERVICE_CARD_DATA[cat.id];
+              // T041 — modern semantic icons matching each service.
+              const ico = iconForService(cat.title_ar) || (cat.icon as any) || "broom";
+              const col = colorForService(cat.title_ar) || cat.color || "#16C47F";
               return (
                 <TouchableOpacity
                   key={cat.id}
@@ -259,18 +240,67 @@ export default function HomeScreen() {
                   style={styles.svcCard}
                   onPress={() => router.push({ pathname: "/services", params: { cat: cat.id } } as any)}
                 >
-                  <View style={[styles.svcCardImageWrap, { backgroundColor: cardData?.bgColor || "#F1F5F9" }]}>
-                    {cardData ? (
-                      <Image source={cardData.image} style={styles.svcCardImage} resizeMode="contain" />
-                    ) : (
-                      <MaterialCommunityIcons name={(cat.icon as any) || "broom"} size={36} color={cat.color || "#16C47F"} />
-                    )}
+                  <View style={[styles.svcCardImageWrap, { backgroundColor: col + "1A" }]}>
+                    <View style={[styles.svcIconCircle, { backgroundColor: col + "26" }]}>
+                      <MaterialCommunityIcons name={ico as any} size={42} color={col} />
+                    </View>
                   </View>
                   <Text style={styles.svcCardTitle} numberOfLines={1}>{cat.title_ar}</Text>
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
+
+          {/* OFFERS (T042: moved below services, T043: soft coupon-style colors) */}
+          {offers.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <TouchableOpacity onPress={() => router.push("/(tabs)/offers")}>
+                  <Text style={[styles.seeAll, { color: colors.primary }]}>{t("see_all")}</Text>
+                </TouchableOpacity>
+                <Text style={styles.sectionTitle}>{t("offers") || "العروض"}</Text>
+              </View>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+                style={{ marginBottom: 18, marginTop: 4 }}
+              >
+                {offers.map((o, idx) => {
+                  const p = OFFER_PALETTES[idx % OFFER_PALETTES.length];
+                  return (
+                    <TouchableOpacity
+                      key={o.id}
+                      activeOpacity={0.92}
+                      onPress={() => router.push("/(tabs)/offers")}
+                      style={[styles.offerCard, { backgroundColor: p.bg, borderColor: p.border, borderWidth: 1 }]}
+                    >
+                      <View style={styles.offerInner}>
+                        <View style={{ flex: 1, alignItems: "flex-end" }}>
+                          <View style={[styles.offerBadge, { backgroundColor: p.accent + "22" }]}>
+                            <Text style={[styles.offerBadgeText, { color: p.text }]}>عرض</Text>
+                          </View>
+                          <Text style={[styles.offerTitle, { color: p.text }]} numberOfLines={1}>{o.title_ar}</Text>
+                          <Text style={[styles.offerSub, { color: p.text + "CC" }]} numberOfLines={2}>{o.desc_ar}</Text>
+                          {!!o.discount && (
+                            <View style={[styles.discountChip, { backgroundColor: p.accent }]}>
+                              <Text style={[styles.discountText, { color: "#FFF" }]}>خصم {o.discount}%</Text>
+                            </View>
+                          )}
+                        </View>
+                        {/* T043: ticket-style notch + icon */}
+                        <View style={[styles.offerNotch, { backgroundColor: "#F8FAFC" }]} pointerEvents="none" />
+                        <View style={[styles.offerIcon, { backgroundColor: p.accent + "22" }]}>
+                          <Feather name="gift" size={26} color={p.accent} />
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </>
+          )}
 
           {/* PROVIDERS */}
           <View style={styles.sectionHeader}>
@@ -318,11 +348,17 @@ export default function HomeScreen() {
             </ScrollView>
           )}
 
-          {/* AI BOT */}
-          <TouchableOpacity activeOpacity={0.92} style={styles.botWrap} onPress={() => router.push("/help")}>
-            <LinearGradient colors={["#7C3AED", "#4F46E5"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.botCard}>
+          {/* AI BOT — T044: route to chat tab (smart assistant), with light-friendly contrast on the gradient */}
+          <TouchableOpacity activeOpacity={0.92} style={styles.botWrap} onPress={() => requireAuth("/(tabs)/chat")}>
+            <LinearGradient colors={["#8B5CF6", "#6366F1"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.botCard}>
+              {/* Decorative orbs for premium feel */}
+              <View style={styles.botOrbA} pointerEvents="none" />
+              <View style={styles.botOrbB} pointerEvents="none" />
               <View style={styles.botContent}>
-                <Text style={styles.botTitle}>{t("ai_assistant")}</Text>
+                <View style={styles.botTitleRow}>
+                  <View style={styles.botBadgeAi}><Text style={styles.botBadgeAiText}>AI</Text></View>
+                  <Text style={styles.botTitle}>{t("ai_assistant")}</Text>
+                </View>
                 <Text style={styles.botSub}>{t("ai_assistant_sub")}</Text>
               </View>
               <View style={styles.botIcon}>
@@ -334,14 +370,6 @@ export default function HomeScreen() {
       </ScrollView>
     </View>
   );
-}
-
-function shade(hex: string, percent: number) {
-  const m = hex.replace("#", "").match(/.{2}/g);
-  if (!m) return hex;
-  const [r, g, b] = m.map((c) => parseInt(c, 16));
-  const f = (n: number) => Math.max(0, Math.min(255, Math.round(n + (n * percent) / 100)));
-  return `#${[f(r), f(g), f(b)].map((n) => n.toString(16).padStart(2, "0")).join("")}`;
 }
 
 const styles = StyleSheet.create({
@@ -423,7 +451,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  svcCardImage: { width: 80, height: 80 },
+  svcIconCircle: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center" },
   svcCardTitle: {
     fontFamily: "Tajawal_700Bold",
     fontSize: 13.5,
@@ -447,9 +475,15 @@ const styles = StyleSheet.create({
   provPriceText: { color: "#16C47F", fontFamily: "Tajawal_700Bold", fontSize: 10 },
 
   botWrap: { marginHorizontal: 16, marginTop: 22, borderRadius: 22, overflow: "hidden", shadowColor: "#7C3AED", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 14, elevation: 5 },
-  botCard: { flexDirection: "row-reverse", alignItems: "center", padding: 16, gap: 14 },
-  botIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
+  botCard: { flexDirection: "row-reverse", alignItems: "center", padding: 16, gap: 14, position: "relative", overflow: "hidden" },
+  botIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" },
   botContent: { flex: 1, alignItems: "flex-end" },
+  botTitleRow: { flexDirection: "row-reverse", alignItems: "center", gap: 8 },
+  botBadgeAi: { backgroundColor: "rgba(255,255,255,0.22)", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 100 },
+  botBadgeAiText: { color: "#FFF", fontFamily: "Tajawal_700Bold", fontSize: 10, letterSpacing: 1 },
   botTitle: { color: "#FFF", fontFamily: "Tajawal_700Bold", fontSize: 16 },
-  botSub: { color: "rgba(255,255,255,0.9)", fontFamily: "Tajawal_500Medium", fontSize: 11.5, marginTop: 3 },
+  botSub: { color: "rgba(255,255,255,0.92)", fontFamily: "Tajawal_500Medium", fontSize: 11.5, marginTop: 4 },
+  botOrbA: { position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.10)", top: -40, left: -30 },
+  botOrbB: { position: "absolute", width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.06)", bottom: -30, right: 60 },
+  offerNotch: { position: "absolute", top: -10, bottom: -10, width: 20, alignSelf: "center", left: "55%", borderRadius: 100 },
 });

@@ -59,7 +59,14 @@ export default function ServicesScreen() {
         const finalCats = dbCats.length > 0 ? dbCats : (FALLBACK_CATEGORIES as any);
         const finalSvcs = dbSvcs.length > 0 ? dbSvcs : (FALLBACK_SERVICES as any);
 
-        setCats([{ id: "all", title_ar: "الكل", icon: "grid", color: "#16C47F" } as any, ...finalCats]);
+        // Dedup: if backend already includes an "all"/"الكل" category, don't add a second one.
+        // Reorder by popularity: keep "all" first, then sort the rest by service-count desc.
+        const counts: Record<string, number> = {};
+        for (const sv of finalSvcs) counts[sv.category_id || ""] = (counts[sv.category_id || ""] || 0) + 1;
+        const dedupedDb = (finalCats as Cat[])
+          .filter((c) => c.id !== "all" && c.title_ar !== "الكل")
+          .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0));
+        setCats([{ id: "all", title_ar: "الكل", icon: "grid", color: "#16C47F" } as any, ...dedupedDb]);
         setServices(finalSvcs);
       } catch {
         if (cancelled) return;

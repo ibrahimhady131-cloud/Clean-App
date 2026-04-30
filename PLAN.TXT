@@ -1,0 +1,60 @@
+Session Plan: Comprehensive App Overhaul
+Objective
+Fix all reported issues in نظافة cleaning app across mobile, admin, and API.
+
+Tasks (ordered by dependency)
+P0 - Critical blockers
+ T001: Fix mobile splash hang on Expo Go (font loading timeout, hide splash always)
+ T002: Fix icon font loading (preload @expo/vector-icons fonts properly)
+ T003: Fix bookings ↔ providers DB relationship (explicit FK in queries)
+P1 - Data cleanup
+ T010: Remove dummy bookings from customer bookings page (real DB only)
+ T011: Remove dummy providers from booking.tsx (real nearby providers from DB)
+ T012: Audit all screens for hardcoded mock data, replace with real DB queries
+ T013: Real notifications from notifications table + mark as read + navigation
+P2 - Real-time features
+ T020: Provider live location broadcast (active providers write lat/lng every 5s)
+ T021: Customer map subscribes to active providers via Supabase Realtime
+ T022: Tracking page subscribes to booking updates + provider location
+ T023: Notification stream on booking status change (insert into notifications)
+P3 - Booking flow improvements
+ T030: Booking page: remove fake providers, only nearby available
+ T031: Add "Instant booking" vs "Scheduled" toggle
+ T032: Improve progress steps UI/timeline
+ T033: Service card on home → direct to booking for that service
+P4 - Home page polish
+ T040: Zoom in map (smaller delta)
+ T041: Modern service icons matching each service (home, deep clean, office, villa, sofa, carpet, etc)
+ T042: Move offers below services section
+ T043: Light/soft coupon-style colors for offer cards
+ T044: Fix AI assistant card background + route to AI bot (not contact)
+P5 - Services page
+ T050: Remove duplicate "All" filter
+ T051: Reorder filter buttons by popularity
+P6 - Chat / AI assistant
+ T060: Voice input (Speech Recognition web + expo-speech native)
+ T061: Display services in grid layout
+ T062: Auto-fill address from saved/current with confirmation
+ T063: Auto-fill phone from profile with confirmation
+ T064: Teach AI about order status, refunds, disputes, tickets, invoice lifecycle
+ T065: Premium AI guide UI
+P7 - Payment page
+ T070: Redesign wallet icon (large, integrated into card background)
+ T071: Real logos for each payment method
+P8 - Admin alignment
+ T080: Verify admin pages reflect mobile data accurately
+ T081: Document any schema gaps
+P9 - Build
+ T090: Document APK build steps (Replit cannot build APK directly — needs EAS)
+Key files
+Mobile root: artifacts/mobile/app/_layout.tsx, app/index.tsx
+Auth: artifacts/mobile/lib/auth.tsx, lib/supabase.ts
+Home: artifacts/mobile/app/(tabs)/home.tsx (or index.tsx)
+Booking: artifacts/mobile/app/booking.tsx, tracking.tsx
+Chat: artifacts/mobile/app/(tabs)/chat.tsx, chat-detail.tsx
+Services: artifacts/mobile/app/(tabs)/services.tsx
+Notifications: artifacts/mobile/app/notifications.tsx
+Payment: artifacts/mobile/app/payment.tsx
+Provider home: artifacts/mobile/app/(provider)/home.tsx
+Admin: artifacts/admin/src/...
+API: artifacts/api-server/src/...

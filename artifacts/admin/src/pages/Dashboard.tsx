@@ -25,7 +25,7 @@ export default function Dashboard() {
       });
       const { data } = await supabase
         .from("bookings")
-        .select("id, status, total_price, scheduled_at, profiles!bookings_user_id_fkey(full_name)")
+        .select("id, status, total, scheduled_at, profiles!bookings_user_id_fkey(full_name)")
         .order("created_at", { ascending: false })
         .limit(8);
       setRecent(data ?? []);
@@ -77,7 +77,7 @@ export default function Dashboard() {
                   <td className="py-3 px-2 font-mono text-xs text-gray-500">#{r.id.slice(0, 8)}</td>
                   <td className="py-3 px-2">{r.profiles?.full_name ?? "—"}</td>
                   <td className="py-3 px-2 text-gray-600">{r.scheduled_at ? new Date(r.scheduled_at).toLocaleString("ar-SA") : "—"}</td>
-                  <td className="py-3 px-2 font-bold text-emerald-600">{Number(r.total_price ?? 0).toLocaleString("ar-SA")} ر.س</td>
+                  <td className="py-3 px-2 font-bold text-emerald-600">{Number(r.total ?? 0).toLocaleString("ar-SA")} ر.س</td>
                   <td className="py-3 px-2">
                     <span className="inline-block px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">{r.status}</span>
                   </td>

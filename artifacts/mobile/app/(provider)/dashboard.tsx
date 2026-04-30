@@ -136,6 +136,27 @@ export default function ProviderHome() {
     };
   }, [loadAll]);
 
+  // T020 — Live location broadcast every 5s while provider is online.
+  // Customer map + tracking page subscribe via Supabase Realtime to providers table.
+  useEffect(() => {
+    if (!online || !session?.user) return;
+    let cancelled = false;
+    const uid = session.user.id;
+    const tick = async () => {
+      try {
+        const r = await getCurrentResolved();
+        if (cancelled || !r) return;
+        await supabase.from("providers").update({ current_lat: r.lat, current_lng: r.lng }).eq("id", uid);
+        setMyLoc(r);
+      } catch (e) {
+        // swallow — next tick will retry
+      }
+    };
+    tick(); // immediate
+    const id = setInterval(tick, 5000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [online, session]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadAll();
