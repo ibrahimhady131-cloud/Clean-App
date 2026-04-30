@@ -21,6 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     ios: {
       supportsTablet: false,
+      bundleIdentifier: "com.cleanbeaton.nathafa",
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
           "نحتاج الإذن بموقعك لإيجاد مزودي الخدمة القريبين منك",
@@ -29,6 +30,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
     },
     android: {
+      package: "com.cleanbeaton.nathafa",
+      versionCode: 1,
+      adaptiveIcon: {
+        foregroundImage: "./assets/images/icon.png",
+        backgroundColor: "#16C47F",
+      },
       permissions: [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
@@ -60,5 +67,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       typedRoutes: true,
       reactCompiler: true,
     },
+    extra: {
+      ...(config.extra ?? {}),
+      eas: {
+        projectId: "dd03c810-2182-47e7-9a0a-823fdcc351b8",
+      },
+    },
+    owner: "clean-beaton",
   };
 };
